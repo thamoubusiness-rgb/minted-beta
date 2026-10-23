@@ -35,7 +35,7 @@
     "node": ">=20"
   },
   "overrides": {
-    "@types/react": "$@types/react",
-    "@types/react-dom": "$@types/react-dom"
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0"
   }
 }
