@@ -1,0 +1,58 @@
+{
+  "updated": "22 October 2026",
+  "draftNote": "Draft for legal review. This text has not been reviewed by a lawyer and is not legal advice. Replace every [BRACKETED] item before going live.",
+  "pages": {
+    "terms": {
+      "title": "Terms of service",
+      "lead": "These terms apply when you use minted. By signing in or launching a coin, you agree to them.",
+      "sections": [
+        { "h": "What minted is", "p": ["minted is a verification layer for creator coins. It lets a creator sign in with X, link a Solana wallet and launch one coin on pump.fun from that wallet. minted is not an exchange, a broker or a wallet. Coins are created on the Solana blockchain by the creator's own wallet and are traded on pump.fun under pump.fun's own terms."] },
+        { "h": "Who can use minted", "ul": ["You are at least 18 years old.", "You are not located in, or a resident of, [BLOCKED REGIONS].", "Using minted is legal where you live, and you follow the laws that apply to you, including tax and advertising rules."] },
+        { "h": "Your account", "p": ["You sign in with your X account. We read your public profile (name, handle, photo, bio, follower count and account creation date) and never post for you. You are responsible for keeping your X account and your wallet secure."], "ul": ["Each X account can launch one coin, ever.", "Each wallet can launch one coin, ever.", "The wallet you link creates your coin and receives your creator fees. It cannot be changed after launch."] },
+        { "h": "What \"verified\" means", "p": ["Verified means three things were confirmed: the X account signed in to minted, the wallet signed a message linking it to that X account, and the same wallet is the on-chain creator of the coin. Verified does not mean the coin is safe, valuable, endorsed by minted, or a good purchase."] },
+        { "h": "Your coin's details", "p": ["Your coin's name, ticker, image and description come from your X profile at the moment you launch and cannot be edited on minted. They are written to the blockchain and to IPFS and cannot be changed or removed later, even if you change your X profile."] },
+        { "h": "Creator responsibilities", "ul": ["Do not promise or suggest profits, revenue, dividends, access or any other return to people who buy your coin.", "Do not describe your coin as an investment in you, your work or your future earnings.", "Clearly disclose that you created the coin whenever you promote it, as advertising rules where you and your audience live require.", "Do not launch on behalf of someone else or impersonate anyone.", "You decide whether to buy or sell your own coin. Your first buy, your holdings and your sales are shown publicly."] },
+        { "h": "Fans and buyers", "p": ["minted does not give financial, investment, legal or tax advice. If you buy a coin, you do so on pump.fun, at your own risk, and under pump.fun's terms. Read the Risk notice before buying anything."] },
+        { "h": "Fees", "p": ["minted currently charges no platform fee. Solana network fees and pump.fun fees apply to every launch and trade, and are shown in your wallet before you approve. If we introduce a fee, we will show it on the launch screen before you sign."] },
+        { "h": "We never hold your keys or funds", "p": ["Every transaction is signed by your own wallet. minted never has access to your private keys, seed phrase or funds, and will never ask for them. Anyone who asks for them is not minted."] },
+        { "h": "Things you must not do", "ul": ["Use minted for fraud, market manipulation, money laundering or to evade sanctions.", "Use bought, hacked or fake X accounts.", "Interfere with the service, scrape it at scale, or try to get around the one-coin rule.", "Break the law or the rights of others."] },
+        { "h": "Delisting and suspension", "p": ["We may remove a coin or creator page from minted, or stop you using minted, if you break these terms, if your X account is suspended, or if the law requires it. Removing a page from minted does not remove the coin from the blockchain or from pump.fun. You can ask us to delist your own page at any time."] },
+        { "h": "No warranties and limits on liability", "p": ["minted is provided as it is, without warranties of any kind. We are not responsible for losses from trading, price changes, the blockchain, pump.fun, X, your wallet, or third-party services. To the extent the law allows, our total liability to you is limited to [AMOUNT]. Nothing in these terms limits rights you have under consumer law that cannot be limited."] },
+        { "h": "Changes", "p": ["We may update these terms. If a change is significant, we will show a notice on the site before it takes effect. Continuing to use minted after that means you accept the new terms."] },
+        { "h": "Law and contact", "p": ["These terms are governed by the laws of [COUNTRY]. minted is operated by [COMPANY NAME], [ADDRESS]. Questions: [SUPPORT EMAIL]."] }
+      ]
+    },
+    "risk": {
+      "title": "Risk notice",
+      "lead": "Creator coins are highly speculative. Read this before you launch or buy one.",
+      "sections": [
+        { "h": "You can lose everything you put in", "p": ["The price of a creator coin can fall to zero very quickly and may never recover. Only spend money you can afford to lose completely."] },
+        { "h": "Prices move on a bonding curve", "p": ["On pump.fun, a coin's price is set by a formula that rises as people buy and falls as people sell. Early buyers who sell can push the price down sharply. There may be no buyers when you want to sell."] },
+        { "h": "Creators can sell", "p": ["A creator can buy their own coin at launch and sell it at any time. minted shows the creator's first buy, current holdings and sales, but cannot stop them from selling."] },
+        { "h": "Verified is not an endorsement", "p": ["The Verified badge only confirms that the coin was launched by the X account it names. It says nothing about the coin's value, the creator's intentions or whether buying is a good idea."] },
+        { "h": "Copies and scams", "p": ["Anyone can create a coin with a creator's name or photo directly on pump.fun. Always check the contract address on the creator's minted page before buying. minted will never message you first or ask for your seed phrase."] },
+        { "h": "Transactions are final", "p": ["Blockchain transactions cannot be reversed. If you send funds to the wrong address or approve the wrong transaction, they cannot be recovered."] },
+        { "h": "Limited legal protection", "p": ["Creator coins are generally not covered by deposit guarantees, investor compensation schemes or the protections that apply to regulated financial products. Rules differ by country and may change."] },
+        { "h": "Technology and third parties", "p": ["Coins depend on Solana, pump.fun, wallets, RPC providers and IPFS. Outages, bugs, attacks or changes to any of them can cause delays or losses."] },
+        { "h": "Taxes", "p": ["Buying, selling or receiving creator fees may have tax consequences. You are responsible for your own taxes."] },
+        { "h": "Creators: advertising rules apply", "p": ["Promoting your own coin may be regulated advertising where you or your audience live. You may need to disclose that you created the coin and avoid any suggestion of returns."] }
+      ]
+    },
+    "privacy": {
+      "title": "Privacy policy",
+      "lead": "What we collect, why, and the choices you have.",
+      "sections": [
+        { "h": "Who is responsible", "p": ["[COMPANY NAME], [ADDRESS], is the controller of your personal data. Contact: [SUPPORT EMAIL]."] },
+        { "h": "What we collect", "ul": ["From X, when you sign in: your X user ID, handle, display name, bio, profile photo, follower count and account creation date.", "Your wallet address and the signed message that links it to your X account.", "Your coin's details, launch transaction and on-chain activity related to it.", "Basic technical logs kept by our hosting provider, such as IP address and browser type, for security."] },
+        { "h": "Why we use it", "ul": ["To sign you in, check eligibility and enforce one coin per account (performance of our agreement with you).", "To show verified creator pages and the public directory (performance of our agreement and our legitimate interest in a trustworthy directory).", "To prevent fraud and abuse (legitimate interest).", "To meet legal obligations."] },
+        { "h": "Public and permanent data", "p": ["When you launch, your coin's name, ticker, image, description and links are written to the Solana blockchain and stored on IPFS. Your wallet address and its transactions are public on the blockchain. This data is public and cannot be changed or deleted by us or anyone else."] },
+        { "h": "Who we share it with", "ul": ["Hosting and infrastructure: Vercel (website), Supabase (database), Pinata (IPFS storage), Solana RPC providers.", "X, to sign you in and refresh your public profile.", "Authorities, if the law requires it.", "We do not sell your personal data."] },
+        { "h": "International transfers", "p": ["Some providers are outside the European Economic Area. Where that happens, we rely on safeguards such as the European Commission's standard contractual clauses."] },
+        { "h": "How long we keep it", "p": ["We keep your account and coin records while your page is listed and for [RETENTION PERIOD] after, unless the law requires longer. Expired sign-in and wallet-linking records are deleted regularly."] },
+        { "h": "Cookies", "p": ["We use one essential cookie to keep you signed in. We do not use advertising or tracking cookies."] },
+        { "h": "Your rights", "p": ["You can ask to access, correct, delete or export your data, or object to how we use it, by writing to [SUPPORT EMAIL]. We cannot delete data stored on the blockchain or IPFS. You can also complain to your data protection authority (in Italy, the Garante per la protezione dei dati personali)."] },
+        { "h": "Changes", "p": ["If we change this policy in a significant way, we will show a notice on the site."] }
+      ]
+    }
+  }
+}

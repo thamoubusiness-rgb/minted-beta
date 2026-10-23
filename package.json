@@ -1,0 +1,37 @@
+{
+  "name": "minted",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start -p ${PORT:-3000}",
+    "migrate": "node scripts/migrate.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@pump-fun/pump-sdk": "latest",
+    "@solana/wallet-adapter-base": "0.9.23",
+    "@solana/wallet-adapter-react": "0.15.35",
+    "@solana/web3.js": "1.98.0",
+    "bn.js": "5.2.1",
+    "bs58": "6.0.0",
+    "lenis": "1.1.13",
+    "next": "15.1.6",
+    "next-auth": "5.0.0-beta.25",
+    "postgres": "3.4.5",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "tweetnacl": "1.0.3"
+  },
+  "devDependencies": {
+    "@types/bn.js": "5.1.6",
+    "@types/node": "22.10.2",
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "typescript": "5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

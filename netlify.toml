@@ -1,0 +1,8 @@
+# Netlify build settings. Next.js is detected automatically (Netlify's Next.js adapter).
+[build]
+  # Creates or updates the database tables, then builds the app.
+  command = "npm run migrate && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
