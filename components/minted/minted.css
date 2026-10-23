@@ -16,8 +16,8 @@ html.lenis, html.lenis body{height:auto}
 .lenis.lenis-smooth{scroll-behavior:auto !important}
 .lenis.lenis-stopped{overflow:hidden}
 
-.minted a{color:inherit}
-.minted button,.minted input{font:inherit;color:inherit}
+.minted :where(a){color:inherit}
+.minted :where(button,input){font:inherit;color:inherit}
 .minted :focus-visible{outline:2px solid var(--sky);outline-offset:3px}
 .minted ::selection{background:rgba(165,243,252,.25)}
 .minted h1,.minted h2,.minted h3{margin:0;font-weight:500;text-wrap:balance}
