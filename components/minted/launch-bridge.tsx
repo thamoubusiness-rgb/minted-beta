@@ -148,6 +148,7 @@ export default function LaunchBridge() {
       search: async (handle) => (await api<{ token: Awaited<ReturnType<MintedBridge["search"]>> }>(`/api/search?handle=${encodeURIComponent(handle)}`)).token,
     };
     window.__minted = bridge;
+    window.dispatchEvent(new Event("minted:bridge"));
     return () => {
       if (window.__minted === bridge) delete window.__minted;
     };

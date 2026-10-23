@@ -2,7 +2,9 @@
 
 import { Fragment, useEffect, useRef, type CSSProperties } from "react";
 import { initMinted } from "./init-minted";
-import LaunchBridge from "./launch-bridge";
+import dynamic from "next/dynamic";
+
+const WalletBridge = dynamic(() => import("./wallet-bridge"), { ssr: false });
 import "./minted.css";
 
 import { geist, geistMono } from "./fonts";
@@ -70,7 +72,7 @@ export default function MintedLanding() {
 
   return (
     <div ref={rootRef} className={`minted ${geist.variable} ${geistMono.variable}`} data-demo={DEMO ? "1" : "0"}>
-      <LaunchBridge />
+      <WalletBridge />
       <div className="progress" id="progress" aria-hidden="true" />
       <div className="glow" id="glow" aria-hidden="true" />
 

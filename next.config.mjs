@@ -6,8 +6,8 @@ const nextConfig = {
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
   images: { remotePatterns: [{ protocol: "https", hostname: "pbs.twimg.com" }] },
-  // Server-only Solana/pump.fun packages stay out of the client bundle.
-  serverExternalPackages: ["@pump-fun/pump-sdk", "postgres"],
+  // postgres is loaded natively; Solana and pump.fun packages are bundled so their ESM dependencies load correctly.
+  serverExternalPackages: ["postgres"],
 };
 
 export default nextConfig;

@@ -8,6 +8,8 @@ export function initMinted(rootEl: HTMLElement): () => void {
   const $ = (s) => root.querySelector(s);
   const $$ = (s) => Array.from(root.querySelectorAll(s));
   const B = () => window.__minted;
+  // The wallet bridge loads in the browser after this script starts: run fn once it is ready.
+  const whenBridge = (fn) => { if (window.__minted) fn(); else { const h = () => fn(); window.addEventListener("minted:bridge", h, { once: true }); cleanups.push(() => window.removeEventListener("minted:bridge", h)); } };
   const cleanups = [];
   let alive = true;
   const on = (t, ev, fn, opts?) => { t.addEventListener(ev, fn, opts); cleanups.push(() => t.removeEventListener(ev, fn, opts)); };
@@ -118,7 +120,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
       buildStrip();
     } catch { /* keep what is shown */ }
   };
-  later(loadTokens, 50);
+  whenBridge(loadTokens);
   every(() => { if (!document.hidden && listSeen) loadTokens(); }, 20000);
   if (DEMO) {
     every(() => {
@@ -381,7 +383,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
   const okSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
   const noSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   let lastFocus = null;
-  $("#lnNet").innerHTML = '<span class="dot"></span>Solana ' + (B()?.cluster === "mainnet-beta" ? "mainnet" : "devnet");
+  whenBridge(() => { $("#lnNet").innerHTML = '<span class="dot"></span>Solana ' + (B()?.cluster === "mainnet-beta" ? "mainnet" : "devnet"); });
 
   const errBox = (msg) => '<div class="err" role="alert">' + esc(msg) + "</div>";
   const errMsg = (e) => (e && e.message) || "Something went wrong. Try again.";
@@ -680,9 +682,9 @@ export function initMinted(rootEl: HTMLElement): () => void {
   if (params.get("launch") === "1") {
     params.delete("launch");
     history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : "") + location.hash);
-    later(() => openLaunch(), 300);
+    whenBridge(() => later(() => openLaunch(), 300));
   } else {
-    refreshMe();
+    whenBridge(refreshMe);
   }
 
   /* ---------- hero in on load ---------- */
