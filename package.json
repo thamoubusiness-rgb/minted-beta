@@ -36,6 +36,12 @@
   },
   "overrides": {
     "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0"
+    "@types/react-dom": "^19.1.0",
+    "rpc-websockets": {
+      "uuid": "^9.0.1"
+    },
+    "jayson": {
+      "uuid": "^9.0.1"
+    }
   }
 }
