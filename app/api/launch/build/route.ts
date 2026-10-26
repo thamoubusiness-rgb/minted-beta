@@ -27,6 +27,11 @@ export async function POST(req: Request) {
   }
   const initialBuyLamports = Math.round(buySol * LAMPORTS_PER_SOL);
   const rewardMode = body.rewardMode === "holders" ? "holders" : "creator";
+  // The new coin's address, generated in the browser (its secret key never leaves the browser).
+  const mint = toPubkey(body.mint);
+  if (!mint) return fail("bad_mint", "Something went wrong preparing your coin. Refresh and try again.");
+  const [mintUsed] = await sql`select 1 from launches where mint = ${mint.toBase58()}`;
+  if (mintUsed) return fail("bad_mint", "Something went wrong preparing your coin. Refresh and try again.");
 
   // One coin per account: check, then resolve anything still pending on-chain.
   const [existing] = await sql`select 1 from tokens where creator_id = ${c.id}`;
@@ -74,7 +79,7 @@ export async function POST(req: Request) {
       `${symbol.toLowerCase()}-metadata`
     );
 
-    const built = await buildCreateTx({ creator: wallet, name, symbol, uri: metadataUri, initialBuyLamports, holderReward: rewardMode === "holders" });
+    const built = await buildCreateTx({ creator: wallet, mint, name, symbol, uri: metadataUri, initialBuyLamports, holderReward: rewardMode === "holders" });
 
     const [launch] = await sql<{ id: string }[]>`
       insert into launches (creator_id, wallet, mint, name, symbol, description, image_uri, metadata_uri,

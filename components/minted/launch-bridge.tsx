@@ -3,7 +3,7 @@
 // Connects the page's launch panel to real services: X sign-in, the user's Solana wallet and our API.
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { WalletReadyState, type Adapter, type MessageSignerWalletAdapter } from "@solana/wallet-adapter-base";
-import { VersionedTransaction } from "@solana/web3.js";
+import { Keypair, VersionedTransaction } from "@solana/web3.js";
 import bs58 from "bs58";
 import { signIn, signOut } from "next-auth/react";
 import { useEffect, useRef } from "react";
@@ -45,6 +45,8 @@ export default function LaunchBridge() {
   const { connection } = useConnection();
   const walletsRef = useRef(wallets);
   const adapterRef = useRef<Adapter | null>(null);
+  // The new coin's keypair: made here, never sent anywhere. It signs after the wallet does.
+  const mintRef = useRef<Keypair | null>(null);
   walletsRef.current = wallets;
 
   useEffect(() => {
@@ -105,20 +107,31 @@ export default function LaunchBridge() {
         await api("/api/wallet/verify", { method: "POST", body: JSON.stringify({ wallet, signature: bs58.encode(sig) }) });
       },
 
-      build: (initialBuySol, rewardMode) => api("/api/launch/build", { method: "POST", body: JSON.stringify({ initialBuySol, rewardMode }) }),
+      build: (initialBuySol, rewardMode) => {
+        const kp = Keypair.generate();
+        mintRef.current = kp;
+        return api("/api/launch/build", { method: "POST", body: JSON.stringify({ initialBuySol, rewardMode, mint: kp.publicKey.toBase58() }) });
+      },
 
       send: async (txBase64) => {
         const a = adapterRef.current;
         if (!a || !a.connected) throw Object.assign(new Error("Your wallet disconnected. Reconnect it and try again."), { code: "disconnected" });
         const tx = VersionedTransaction.deserialize(Uint8Array.from(atob(txBase64), (c) => c.charCodeAt(0)));
+        const mintKp = mintRef.current;
+        if (!mintKp || !tx.message.staticAccountKeys.some((k) => k.equals(mintKp.publicKey))) {
+          throw Object.assign(new Error("This launch was prepared in another tab. Go back to review and try again."), { code: "stale" });
+        }
         try {
-          // Sign in the wallet, then send through the site's own RPC so the transaction lands on the
-          // network the site runs on (wallets like Phantom otherwise send on whichever network they're set to).
+          // 1) The wallet signs first: wallets warn when a transaction arrives already signed by someone else.
+          // 2) Then the coin's own key adds its signature, here in the browser.
+          // 3) Sent through the site's RPC so it lands on the site's network.
           const signer = a as Adapter & { signTransaction?: (t: VersionedTransaction) => Promise<VersionedTransaction> };
           if (typeof signer.signTransaction === "function") {
             const signed = await signer.signTransaction(tx);
+            signed.sign([mintKp]);
             return await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false, maxRetries: 3 });
           }
+          tx.sign([mintKp]);
           return await a.sendTransaction(tx, connection, { skipPreflight: false, maxRetries: 3 });
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
