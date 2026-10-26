@@ -22,6 +22,7 @@ export type CoinView = {
   launchedAt: string;
   statsUpdatedAt: string | null;
   pumpUrl: string;
+  rewardMode: "creator" | "holders";
 };
 
 export async function getCoin(handleRaw: string): Promise<CoinView | null> {
@@ -32,12 +33,12 @@ export async function getCoin(handleRaw: string): Promise<CoinView | null> {
       mint: string; display_name: string; handle: string; symbol: string; bio: string; avatar_url: string | null; image_uri: string;
       followers_at_launch: number; followers: number; market_cap_usd: string | null; market_cap_sol: string | null;
       creator_balance: string | null; initial_buy_lamports: string; graduated: boolean; status: string;
-      creator_wallet: string; tx_signature: string | null; launched_at: Date; stats_updated_at: Date | null;
+      creator_wallet: string; tx_signature: string | null; reward_mode: string; launched_at: Date; stats_updated_at: Date | null;
     }[]
   >`
     select t.mint, c.display_name, c.handle, t.symbol, c.bio, c.avatar_url, t.image_uri, t.followers_at_launch, c.followers,
            t.market_cap_usd, t.market_cap_sol, t.creator_balance, t.initial_buy_lamports, t.graduated, c.status,
-           t.creator_wallet, l.tx_signature, t.launched_at, t.stats_updated_at
+           t.creator_wallet, t.reward_mode, l.tx_signature, t.launched_at, t.stats_updated_at
     from creators c
     join tokens t on t.creator_id = c.id
     left join launches l on l.id = t.launch_id
@@ -65,5 +66,6 @@ export async function getCoin(handleRaw: string): Promise<CoinView | null> {
     launchedAt: r.launched_at.toISOString(),
     statsUpdatedAt: r.stats_updated_at ? r.stats_updated_at.toISOString() : null,
     pumpUrl: pumpCoinUrl(r.mint),
+    rewardMode: r.reward_mode === "holders" ? "holders" : "creator",
   };
 }

@@ -1,5 +1,5 @@
 import { isUniqueViolation, sql, type CreatorRow } from "./db";
-import { readCurve } from "./pump";
+import { holderRewardsCreator, readCurve } from "./pump";
 import { connection } from "./solana";
 
 export type LaunchRow = {
@@ -14,6 +14,7 @@ export type LaunchRow = {
   last_valid_block_height: string;
   state: "built" | "confirmed" | "expired" | "failed";
   tx_signature: string | null;
+  reward_mode: "creator" | "holders";
 };
 
 /** Ticker = @handle in capitals, letters and digits only, max 10 characters. */
@@ -30,7 +31,9 @@ export async function finalizeLaunch(launch: LaunchRow, creator: CreatorRow, sig
   const curve = await readCurve(launch.mint);
   if (!curve) return { ok: false as const, reason: "not_found" };
   const onchainCreator = (curve as { creator?: { toBase58(): string } }).creator?.toBase58();
-  if (onchainCreator !== launch.wallet) return { ok: false as const, reason: "creator_mismatch" };
+  // Creator fees to the creator: the on-chain creator is their wallet. To holders: it's the coin's holder-rewards PDA.
+  const expected = launch.reward_mode === "holders" ? holderRewardsCreator(launch.mint) : launch.wallet;
+  if (onchainCreator !== expected) return { ok: false as const, reason: "creator_mismatch" };
 
   try {
     await sql.begin(async (tx) => {
@@ -38,9 +41,9 @@ export async function finalizeLaunch(launch: LaunchRow, creator: CreatorRow, sig
         update launches set state = 'confirmed', tx_signature = coalesce(${signature}, tx_signature), updated_at = now()
         where id = ${launch.id}`;
       await tx`
-        insert into tokens (mint, creator_id, creator_wallet, launch_id, name, symbol, image_uri, initial_buy_lamports, followers_at_launch)
+        insert into tokens (mint, creator_id, creator_wallet, launch_id, name, symbol, image_uri, initial_buy_lamports, followers_at_launch, reward_mode)
         values (${launch.mint}, ${creator.id}, ${launch.wallet}, ${launch.id}, ${launch.name}, ${launch.symbol},
-                ${launch.image_uri}, ${launch.initial_buy_lamports}, ${creator.followers})
+                ${launch.image_uri}, ${launch.initial_buy_lamports}, ${creator.followers}, ${launch.reward_mode || "creator"})
         on conflict (mint) do nothing`;
     });
   } catch (e) {

@@ -80,3 +80,19 @@ create table if not exists tokens (
 );
 create index if not exists tokens_launched_idx on tokens (launched_at desc);
 create index if not exists tokens_mcap_idx on tokens (market_cap_usd desc nulls last);
+
+-- Creator rewards: where pump.fun's creator fee goes. 'creator' = the creator's wallet, 'holders' = pump.fun holder rewards.
+alter table launches add column if not exists reward_mode text not null default 'creator';
+alter table tokens add column if not exists reward_mode text not null default 'creator';
+
+-- Cached X username lookups for the search bar (saves X API credits).
+create table if not exists x_lookups (
+  handle_lower  text primary key,
+  found         boolean not null,
+  x_user_id     text,
+  handle        text,
+  display_name  text,
+  avatar_url    text,
+  verified_type text,
+  fetched_at    timestamptz not null default now()
+);

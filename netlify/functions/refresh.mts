@@ -1,4 +1,4 @@
-// Runs every 10 minutes (UTC) on the published site: asks the app to refresh coin stats.
+// Runs every 5 minutes (UTC) on the published site: asks the app to refresh coin stats.
 // Once a day the same route also refreshes X profiles (see app/api/cron/refresh/route.ts).
 declare const Netlify: { env: { get(name: string): string | undefined } };
 
@@ -16,5 +16,5 @@ export default async () => {
 };
 
 export const config = {
-  schedule: "*/10 * * * *",
+  schedule: "*/5 * * * *",
 };

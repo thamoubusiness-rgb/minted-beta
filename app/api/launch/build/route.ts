@@ -26,6 +26,7 @@ export async function POST(req: Request) {
     return fail("bad_buy", `First buy must be between 0 and ${config.maxBuySol} SOL.`);
   }
   const initialBuyLamports = Math.round(buySol * LAMPORTS_PER_SOL);
+  const rewardMode = body.rewardMode === "holders" ? "holders" : "creator";
 
   // One coin per account: check, then resolve anything still pending on-chain.
   const [existing] = await sql`select 1 from tokens where creator_id = ${c.id}`;
@@ -73,13 +74,13 @@ export async function POST(req: Request) {
       `${symbol.toLowerCase()}-metadata`
     );
 
-    const built = await buildCreateTx({ creator: wallet, name, symbol, uri: metadataUri, initialBuyLamports });
+    const built = await buildCreateTx({ creator: wallet, name, symbol, uri: metadataUri, initialBuyLamports, holderReward: rewardMode === "holders" });
 
     const [launch] = await sql<{ id: string }[]>`
       insert into launches (creator_id, wallet, mint, name, symbol, description, image_uri, metadata_uri,
-                            initial_buy_lamports, blockhash, last_valid_block_height)
+                            initial_buy_lamports, blockhash, last_valid_block_height, reward_mode)
       values (${c.id}, ${wallet.toBase58()}, ${built.mint}, ${name}, ${symbol}, ${description}, ${image}, ${metadataUri},
-              ${initialBuyLamports}, ${built.blockhash}, ${built.lastValidBlockHeight})
+              ${initialBuyLamports}, ${built.blockhash}, ${built.lastValidBlockHeight}, ${rewardMode})
       returning id`;
 
     return json({
@@ -88,13 +89,16 @@ export async function POST(req: Request) {
       tx: built.txBase64,
       blockhash: built.blockhash,
       lastValidBlockHeight: built.lastValidBlockHeight,
-      coin: { name, symbol, description, image },
+      coin: { name, symbol, description, image, rewardMode },
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg === "INSUFFICIENT_FUNDS") {
       const net = config.cluster === "mainnet-beta" ? "" : ` on Solana ${config.cluster} (switch your wallet to ${config.cluster}; free test SOL at faucet.solana.com)`;
       return fail("insufficient_funds", `Your wallet doesn't have enough SOL${net} for the fees and your first buy. Add SOL or lower the first buy.`, 400);
+    }
+    if (msg === "HOLDER_REWARDS_OFF") {
+      return fail("holder_rewards_off", "pump.fun isn't accepting holder-reward coins right now. Choose \"To me\" or try again later.", 400);
     }
     if (msg === "TX_TOO_LARGE") {
       return fail("tx_too_large", "This launch is too big for one Solana transaction. Try again with no first buy.", 400);

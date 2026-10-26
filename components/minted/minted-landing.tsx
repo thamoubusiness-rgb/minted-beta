@@ -393,10 +393,11 @@ function LaunchPanel() {
               <div className="field"><span className="k">Bio</span><span className="v wrap2" id="pvBio">Your X bio, word for word</span><span className="lock"><Lock /></span></div>
               <div className="field"><span className="k">Wallet</span><span className="v mono" id="pvWallet">Not connected</span><span className="lock" /></div>
               <div className="field"><span className="k">First buy</span><span className="v mono" id="pvBuy">0.5 SOL</span><span className="lock" /></div>
+              <div className="field"><span className="k">Rewards</span><span className="v" id="pvRw">To me</span><span className="lock" /></div>
             </div>
             <div className="pv-foot"><span className="state" id="pvState">Draft</span><span id="pvFollow" /></div>
           </div>
-          <p className="ln-fine">Everything except the first buy comes from X and can&apos;t be edited.</p>
+          <p className="ln-fine">Everything except the first buy and rewards comes from X and can&apos;t be edited.</p>
         </aside>
       </div>
     </div>

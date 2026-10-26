@@ -105,7 +105,7 @@ export default function LaunchBridge() {
         await api("/api/wallet/verify", { method: "POST", body: JSON.stringify({ wallet, signature: bs58.encode(sig) }) });
       },
 
-      build: (initialBuySol) => api("/api/launch/build", { method: "POST", body: JSON.stringify({ initialBuySol }) }),
+      build: (initialBuySol, rewardMode) => api("/api/launch/build", { method: "POST", body: JSON.stringify({ initialBuySol, rewardMode }) }),
 
       send: async (txBase64) => {
         const a = adapterRef.current;
@@ -152,7 +152,7 @@ export default function LaunchBridge() {
 
       tokens: async () => (await api<{ tokens: Awaited<ReturnType<MintedBridge["tokens"]>> }>("/api/tokens")).tokens,
 
-      search: async (handle) => (await api<{ token: Awaited<ReturnType<MintedBridge["search"]>> }>(`/api/search?handle=${encodeURIComponent(handle)}`)).token,
+      search: (handle) => api<Awaited<ReturnType<MintedBridge["search"]>>>(`/api/search?handle=${encodeURIComponent(handle)}`),
     };
     window.__minted = bridge;
     window.dispatchEvent(new Event("minted:bridge"));

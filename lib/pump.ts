@@ -9,6 +9,7 @@ import {
   TransactionMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
+import * as pumpSdk from "@pump-fun/pump-sdk";
 import { OnlinePumpSdk, PUMP_SDK, getBuyTokenAmountFromSolAmount } from "@pump-fun/pump-sdk";
 import { config } from "./config";
 import { connection } from "./solana";
@@ -31,14 +32,20 @@ export async function buildCreateTx(opts: {
   symbol: string;
   uri: string;
   initialBuyLamports: number;
+  /** true = pump.fun holder-reward coin: the creator fee is paid to holders instead of the creator. */
+  holderReward?: boolean;
 }): Promise<BuiltLaunch> {
   const sdk = new OnlinePumpSdk(connection);
   const mint = Keypair.generate();
   const { creator, name, symbol, uri, initialBuyLamports } = opts;
+  const holderReward = Boolean(opts.holderReward);
 
   let ixs: TransactionInstruction[];
+  const global = await sdk.fetchGlobal();
+  if (holderReward && (global as { isHolderRewardEnabled?: boolean }).isHolderRewardEnabled === false) {
+    throw new Error("HOLDER_REWARDS_OFF");
+  }
   if (initialBuyLamports > 0) {
-    const global = await sdk.fetchGlobal();
     const feeConfig = await sdk.fetchFeeConfig().catch(() => null);
     const solAmount = new BN(initialBuyLamports);
     const amount = getBuyTokenAmountFromSolAmount({ global, feeConfig, mintSupply: null, bondingCurve: null, amount: solAmount });
@@ -54,7 +61,8 @@ export async function buildCreateTx(opts: {
       amount,
       solAmount: maxSol,
       mayhemMode: false,
-    });
+      holderReward,
+    } as Parameters<typeof PUMP_SDK.createV2AndBuyInstructions>[0]);
   } else {
     const ix = await PUMP_SDK.createV2Instruction({
       mint: mint.publicKey,
@@ -64,7 +72,8 @@ export async function buildCreateTx(opts: {
       creator,
       user: creator,
       mayhemMode: false,
-    });
+      holderReward,
+    } as Parameters<typeof PUMP_SDK.createV2Instruction>[0]);
     ixs = [ix];
   }
 
@@ -110,6 +119,19 @@ export async function buildCreateTx(opts: {
     blockhash,
     lastValidBlockHeight,
   };
+}
+
+const PUMP_PROGRAM_ID = new PublicKey("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P");
+
+/** On a holder-reward coin the on-chain creator is this PDA (seeds "holder-rewards" + mint), not a wallet. */
+export function holderRewardsCreator(mint: string): string {
+  const m = new PublicKey(mint);
+  const fromSdk = (pumpSdk as unknown as { holderRewardsPda?: (mint: PublicKey) => PublicKey | [PublicKey, number] }).holderRewardsPda;
+  if (typeof fromSdk === "function") {
+    const r = fromSdk(m);
+    return (Array.isArray(r) ? r[0] : r).toBase58();
+  }
+  return PublicKey.findProgramAddressSync([Buffer.from("holder-rewards"), m.toBuffer()], PUMP_PROGRAM_ID)[0].toBase58();
 }
 
 /** Reads the bonding curve. Returns null if the coin does not exist on-chain. */

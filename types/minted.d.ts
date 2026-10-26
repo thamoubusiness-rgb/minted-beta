@@ -18,17 +18,21 @@ export type MintedBridge = {
   connectWallet(name: string): Promise<{ name: string; address: string; short: string }>;
   getLinkMessage(wallet: string): Promise<string>;
   signAndLink(wallet: string, message: string): Promise<void>;
-  build(initialBuySol: number): Promise<{ launchId: string; mint: string; tx: string; blockhash: string; lastValidBlockHeight: number }>;
+  build(initialBuySol: number, rewardMode?: "creator" | "holders"): Promise<{ launchId: string; mint: string; tx: string; blockhash: string; lastValidBlockHeight: number }>;
   send(txBase64: string): Promise<string>;
   waitForConfirmation(signature: string, blockhash: string, lastValidBlockHeight: number): Promise<void>;
   confirm(launchId: string, signature: string): Promise<{ mint: string; symbol: string; name: string; url: string }>;
   tokens(): Promise<
     {
       mint: string; name: string; handle: string; symbol: string; avatar: string | null; followersAtLaunch: number;
-      marketCapUsd: number | null; graduated: boolean; launchedAt: string; url: string;
+      marketCapUsd: number | null; graduated: boolean; launchedAt: string; url: string; rewardMode?: string;
     }[]
   >;
-  search(handle: string): Promise<{ mint: string; symbol: string; name: string; handle: string; avatar: string | null; url: string } | null>;
+  search(handle: string): Promise<
+    | { status: "launched"; token: { mint: string; symbol: string; name: string; handle: string; avatar: string | null; graduated: boolean; rewardMode: string; url: string; dexUrl: string; xUrl: string; page: string } }
+    | { status: "found"; profile: { handle: string; name: string; avatar: string | null } }
+    | { status: "not_found" | "unknown" | "invalid" }
+  >;
 };
 
 declare global {

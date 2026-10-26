@@ -87,6 +87,7 @@ export default function CoinPage({ coin, cluster }: { coin: CoinView; cluster: s
                 <h3>Creator activity</h3>
                 <p className="cp-sub">What @{coin.handle} is doing with their own coin.</p>
                 <dl className="sum">
+                  <div><dt>Creator rewards</dt><dd>{coin.rewardMode === "holders" ? "Paid to holders" : "Paid to the creator"}</dd></div>
                   <div><dt>First buy at launch</dt><dd>{coin.initialBuySol ? `${coin.initialBuySol} SOL` : "None"}</dd></div>
                   <div><dt>Creator holds now</dt><dd>{holdPct == null ? "Updating…" : `${holdPct.toFixed(2)}% of supply`}</dd></div>
                   <div><dt>Creator wallet</dt><dd><a href={explorer(`account/${coin.wallet}`)} target="_blank" rel="noopener">{short(coin.wallet)}</a></dd></div>
@@ -99,7 +100,9 @@ export default function CoinPage({ coin, cluster }: { coin: CoinView; cluster: s
                 <ol className="cp-proof">
                   <li><i><Check /></i><div><b>X account signed in</b><span>@{coin.handle} signed in to minted with X.</span></div></li>
                   <li><i><Check /></i><div><b>Wallet proved</b><span>{short(coin.wallet)} signed a message linking it to @{coin.handle}.</span></div></li>
-                  <li><i><Check /></i><div><b>On-chain creator matches</b><span>pump.fun lists {short(coin.wallet)} as this coin&apos;s creator.{" "}
+                  <li><i><Check /></i><div><b>{coin.rewardMode === "holders" ? "Launched by the linked wallet" : "On-chain creator matches"}</b><span>{coin.rewardMode === "holders"
+                    ? <>{short(coin.wallet)} signed and paid for the launch. Creator fees go to holders through pump.fun holder rewards.</>
+                    : <>pump.fun lists {short(coin.wallet)} as this coin&apos;s creator.</>}{" "}
                     {coin.txSignature ? <a href={explorer(`tx/${coin.txSignature}`)} target="_blank" rel="noopener">See the launch transaction</a> : null}</span></div></li>
                 </ol>
               </div>

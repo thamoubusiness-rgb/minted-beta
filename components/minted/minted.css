@@ -473,3 +473,16 @@ html.lenis, html.lenis body{height:auto}
 
 /* ---------- mobile wallet hint ---------- */
 .mob{border:1px dashed var(--border-2);border-radius:16px;padding:14px 16px;font-size:13.5px;color:#cfcfcf}
+
+/* search result: live X lookup */
+.result.rich{flex-direction:column;align-items:stretch;gap:12px}
+.res-top{display:flex;align-items:center;gap:12px}
+.res-ca{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:12px;font-size:13px}
+.res-ca .mono{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.res-actions{display:flex;gap:8px;flex-wrap:wrap}
+.res-btn{min-height:34px;padding:0 12px;font-size:13px}
+/* creator rewards choice */
+.rw{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rw .opt{flex-direction:column;align-items:flex-start;gap:4px;min-height:0;padding:14px}
+.rw .opt.on{border-color:rgba(165,243,252,.55);background:rgba(165,243,252,.06)}
+@media (max-width:520px){.rw{grid-template-columns:1fr}}

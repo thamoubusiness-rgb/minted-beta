@@ -1,17 +1,32 @@
 import { PublicKey } from "@solana/web3.js";
 import { config } from "@/lib/config";
 import { sql } from "@/lib/db";
+import { settleOpenLaunches } from "@/lib/launch";
 import { curveMarketCapSol, readCurve } from "@/lib/pump";
+import type { CreatorRow } from "@/lib/db";
 import { connection, solUsd } from "@/lib/solana";
 import { lookupUsers, upsertCreator } from "@/lib/x";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-// Runs every 10 minutes (vercel.json): refreshes coin stats; once a day also refreshes X profiles.
+// Runs every 5 minutes (netlify/functions/refresh.mts): lists launches that landed but were never confirmed
+// (creator closed the tab), refreshes coin stats, and once a day refreshes X profiles.
 export async function GET(req: Request) {
   if (!config.cronSecret || req.headers.get("authorization") !== `Bearer ${config.cronSecret}`) {
     return new Response("Unauthorized", { status: 401 });
+  }
+
+  // 1) Track launches automatically: any sent launch that landed on-chain gets listed even if the
+  //    creator's browser never called /api/launch/confirm.
+  let listed = 0;
+  const openCreators = await sql<CreatorRow[]>`
+    select c.* from creators c
+    where exists (select 1 from launches l where l.creator_id = c.id and l.state = 'built' and l.created_at > now() - interval '1 day')
+      and not exists (select 1 from tokens t where t.creator_id = c.id)
+    limit 20`;
+  for (const c of openCreators) {
+    try { if ((await settleOpenLaunches(c)).landed) listed++; } catch (e) { console.error("settle failed", e); }
   }
 
   const usd = await solUsd();
@@ -61,5 +76,5 @@ export async function GET(req: Request) {
     }
   }
 
-  return Response.json({ updated, profiles });
+  return Response.json({ listed, updated, profiles });
 }

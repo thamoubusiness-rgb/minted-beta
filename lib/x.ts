@@ -66,3 +66,50 @@ export async function refreshCreator(c: CreatorRow): Promise<CreatorRow> {
     return c; // X unavailable: fall back to the profile stored at sign-in
   }
 }
+
+export type XProfile = { found: true; handle: string; name: string; avatar: string | null; verifiedType: string } | { found: false };
+
+/**
+ * Looks up an X account by @username for the search bar. Results are cached for a day so typing
+ * doesn't burn X API credits. Returns null when X can't be reached (the caller shows a soft error).
+ */
+export async function lookupUsername(handleRaw: string): Promise<XProfile | null> {
+  const key = handleRaw.toLowerCase();
+  const [cached] = await sql<{ found: boolean; handle: string | null; display_name: string | null; avatar_url: string | null; verified_type: string | null }[]>`
+    select found, handle, display_name, avatar_url, verified_type from x_lookups
+    where handle_lower = ${key} and fetched_at > now() - interval '24 hours'`;
+  if (cached) {
+    return cached.found
+      ? { found: true, handle: cached.handle || key, name: cached.display_name || key, avatar: cached.avatar_url, verifiedType: cached.verified_type || "none" }
+      : { found: false };
+  }
+  if (!config.xBearer) return null;
+
+  let res: Response;
+  try {
+    res = await fetch(`https://api.x.com/2/users/by/username/${encodeURIComponent(key)}?user.fields=profile_image_url,verified_type`, {
+      headers: { Authorization: `Bearer ${config.xBearer}` },
+      cache: "no-store",
+    });
+  } catch {
+    return null;
+  }
+  const body = (await res.json().catch(() => ({}))) as { data?: XUser; errors?: { title?: string; type?: string }[] };
+  // X answers 200 with an "errors" entry (or 404) when the username doesn't exist or is suspended.
+  const missing = res.status === 404 || (res.ok && !body.data && (body.errors?.length ?? 0) > 0);
+  if (!res.ok && !missing) {
+    console.error("X username lookup failed", res.status, JSON.stringify(body).slice(0, 300));
+    return null;
+  }
+  const u = body.data;
+  const profile: XProfile = u
+    ? { found: true, handle: u.username, name: u.name, avatar: bigAvatar(u.profile_image_url), verifiedType: u.verified_type || "none" }
+    : { found: false };
+  await sql`
+    insert into x_lookups (handle_lower, found, x_user_id, handle, display_name, avatar_url, verified_type, fetched_at)
+    values (${key}, ${profile.found}, ${u?.id ?? null}, ${u?.username ?? null}, ${u?.name ?? null},
+            ${profile.found ? profile.avatar : null}, ${u?.verified_type ?? null}, now())
+    on conflict (handle_lower) do update set found = excluded.found, x_user_id = excluded.x_user_id, handle = excluded.handle,
+      display_name = excluded.display_name, avatar_url = excluded.avatar_url, verified_type = excluded.verified_type, fetched_at = now()`;
+  return profile;
+}

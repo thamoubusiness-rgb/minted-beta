@@ -121,7 +121,8 @@ export function initMinted(rootEl: HTMLElement): () => void {
     } catch { /* keep what is shown */ }
   };
   whenBridge(loadTokens);
-  every(() => { if (!document.hidden && listSeen) loadTokens(); }, 20000);
+  // Latest launches track themselves: new coins and market caps refresh every 15s while the tab is open.
+  every(() => { if (!document.hidden) loadTokens(); }, 15000);
   if (DEMO) {
     every(() => {
       if (document.hidden || !listSeen || !creators.length) return;
@@ -181,18 +182,53 @@ export function initMinted(rootEl: HTMLElement): () => void {
     on(q, "blur", () => { if (!q.value) { stop = false; ci = 0; del = false; later(type, 900); } });
     later(type, 1600);
   }
-  on(form, "submit", async (e) => {
-    e.preventDefault();
-    const v = q.value.trim().replace(/^@/, "").toLowerCase();
-    if (!/^[a-z0-9_]{1,15}$/.test(v)) { res.hidden = true; return; }
-    res.className = "result"; res.hidden = false;
-    res.innerHTML = '<span class="spin"></span><span style="color:var(--muted)">Looking up @' + esc(v) + "…</span>";
-    let hit = null;
-    try { hit = (await B()?.search(v)) || null; } catch { hit = null; }
-    if (!hit && DEMO) { const d = creators.find((c) => c.h === v); if (d) hit = { name: d.n, handle: d.h, symbol: ticker(d.h), avatar: null, url: null }; }
-    res.innerHTML = hit
-      ? avatar({ n: hit.name, h: hit.handle, img: hit.avatar }, "av-md") + '<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;font-weight:500">' + esc(hit.name) + " " + check + '</div><div class="mono" style="font-size:12.5px;color:var(--sky)">$' + esc(hit.symbol) + '</div></div><a class="btn btn-ghost" style="min-height:36px" href="' + (hit.url ? "/c/" + encodeURIComponent(hit.handle) : "#explore") + '">View coin</a>'
-      : '<span class="av av-md" style="background:#1a1a1a;border:1px solid var(--border-2);color:#cfcfcf">@</span><div style="flex:1;min-width:0"><div style="font-weight:500">@' + esc(v) + ' hasn’t minted yet</div><div style="font-size:12.5px;color:var(--dim)">Any coin using this name elsewhere is not verified.</div></div><a class="btn btn-solid" style="min-height:36px;padding:0 12px;font-size:13px" href="#launch" data-launch="" data-handle="' + esc(v) + '">It’s me</a>';
+  // Live lookup as you type: real X photo, "not found" for wrong usernames, coin links when launched.
+  const iconLink = (href, label, solid?) => '<a class="btn ' + (solid ? "btn-solid" : "btn-ghost") + ' res-btn" href="' + href + '"' + (/^https:/.test(href) ? ' target="_blank" rel="noopener"' : "") + ">" + label + "</a>";
+  const resHTML = (v, r) => {
+    if (r.status === "launched") {
+      const t = r.token, short = t.mint.slice(0, 4) + "…" + t.mint.slice(-4);
+      return '<div class="res-top">' + avatar({ n: t.name, h: t.handle, img: t.avatar }, "av-md") +
+        '<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:6px;font-weight:500">' + esc(t.name) + " " + check + '</div>' +
+        '<div class="mono" style="font-size:12.5px;color:var(--sky)">$' + esc(t.symbol) + ' <span style="color:var(--dim)">· @' + esc(t.handle) + (t.rewardMode === "holders" ? " · rewards to holders" : "") + "</span></div></div></div>" +
+        '<div class="res-ca"><span class="ln-fine">CA</span><span class="mono" title="' + esc(t.mint) + '">' + esc(short) + '</span><button class="ln-link" type="button" data-copy="' + esc(t.mint) + '">Copy</button></div>' +
+        '<div class="res-actions">' +
+        (t.graduated ? iconLink(safeUrl(t.dexUrl), "Trade on DEX", true) + iconLink(safeUrl(t.url), "pump.fun") : iconLink(safeUrl(t.url), "Buy on pump.fun", true) + iconLink(safeUrl(t.dexUrl), "Chart")) +
+        iconLink(esc(t.page), "Coin page") + iconLink(safeUrl(t.xUrl), "X profile") + "</div>";
+    }
+    if (r.status === "found") {
+      const p = r.profile;
+      return '<div class="res-top">' + avatar({ n: p.name, h: p.handle, img: p.avatar }, "av-md") +
+        '<div style="flex:1;min-width:0"><div style="font-weight:500">' + esc(p.name) + ' <span style="color:var(--dim);font-weight:400">@' + esc(p.handle) + "</span></div>" +
+        '<div style="font-size:12.5px;color:var(--dim)">Hasn’t minted yet. Any coin using this name elsewhere is not verified.</div></div>' +
+        '<a class="btn btn-solid" style="min-height:36px;padding:0 12px;font-size:13px" href="#launch" data-launch="" data-handle="' + esc(p.handle) + '">It’s me</a></div>';
+    }
+    if (r.status === "not_found") {
+      return '<div class="res-top"><span class="av av-md" style="background:#1a1a1a;border:1px solid var(--border-2);color:#cfcfcf">?</span><div style="flex:1;min-width:0"><div style="font-weight:500">@' + esc(v) + ' not found</div><div style="font-size:12.5px;color:var(--dim)">No X account uses this username. Check the spelling.</div></div></div>';
+    }
+    return '<div class="res-top"><span class="av av-md" style="background:#1a1a1a;border:1px solid var(--border-2);color:#cfcfcf">@</span><div style="flex:1;min-width:0"><div style="font-weight:500">@' + esc(v) + '</div><div style="font-size:12.5px;color:var(--dim)">Couldn’t reach X right now. Try again in a moment.</div></div></div>';
+  };
+  let seq = 0, timer = 0;
+  const lookup = async (raw, now?) => {
+    const v = raw.trim().replace(/^@/, "").toLowerCase();
+    clearTimeout(timer);
+    const my = ++seq;
+    if (!/^[a-z0-9_]{1,15}$/.test(v) || (!now && v.length < 2)) { res.hidden = true; return; }
+    const go = async () => {
+      res.className = "result rich"; res.hidden = false;
+      res.innerHTML = '<div class="res-top"><span class="spin"></span><span style="color:var(--muted)">Looking up @' + esc(v) + "…</span></div>";
+      let r;
+      try { r = await B()?.search(v); } catch { r = { status: "unknown" }; }
+      if (!r && DEMO) { const d = creators.find((c) => c.h === v); r = d ? { status: "found", profile: { handle: d.h, name: d.n, avatar: null } } : { status: "unknown" }; }
+      if (my !== seq) return; // a newer keystroke won
+      res.innerHTML = resHTML(v, r || { status: "unknown" });
+    };
+    if (now) go(); else timer = window.setTimeout(go, 450);
+  };
+  on(q, "input", () => lookup(q.value));
+  on(form, "submit", (e) => { e.preventDefault(); lookup(q.value, true); });
+  on(res, "click", async (e) => {
+    const b = e.target.closest && e.target.closest("[data-copy]"); if (!b) return;
+    try { await navigator.clipboard.writeText(b.getAttribute("data-copy")); b.textContent = "Copied"; later(() => { b.textContent = "Copy"; }, 1500); } catch { /* clipboard blocked */ }
   });
 
   /* ---------- reveal on scroll ---------- */
@@ -378,7 +414,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
   const ln = $("#ln"), lnMain = $("#lnMain"), lnPanel = $("#lnPanel"), pv = $("#pv"), lnBar = $("#lnBar");
   const stEls = $$(".ln-st");
   const navLaunch = $("#navLaunch");
-  const L = { me: null, wallet: null, linked: false, buy: "0.5", agreed: false, pending: null, busy: false, wanted: null };
+  const L = { me: null, wallet: null, linked: false, buy: "0.5", reward: "creator", agreed: false, pending: null, busy: false, wanted: null };
   const xSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.3L5.3 21H2.2l7.2-8.3L2 3h6.4l4.4 5.8zM16.7 19.2h1.7L7.4 4.7H5.6z"/></svg>';
   const okSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
   const noSvg = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
@@ -455,7 +491,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
       (w.installed ? "Ready to connect" : w.mobileApp ? "Opens minted in the " + esc(w.name) + " app" : "Not installed") + '</small></span><span class="end">' + (w.installed ? '<span class="det">Detected</span>' : w.mobileApp ? "Open app" : "Install") +
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span></button>').join("");
     view('<span class="eyebrow">Step 2 of 4</span><h2 class="ln-h">Connect your Solana wallet</h2>' +
-      '<p class="ln-sub">This wallet creates your coin and receives your creator fees. Choose carefully: it can’t be changed after launch.</p>' +
+      '<p class="ln-sub">This wallet creates your coin and, unless you send them to holders, receives your creator fees. Choose carefully: it can’t be changed after launch.</p>' +
       (mobileNoWallet ? '<p class="mob">On a phone, wallets work inside their own app. Pick yours below: minted opens there and you sign in with X once more.</p>' : "") +
       '<div class="opts">' + opts + '</div><div id="wErr"></div><div class="ln-actions"><button class="ln-link" type="button" data-act="toX">Back</button></div>');
   }
@@ -500,7 +536,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
   function sLinked() {
     setStep(1);
     view('<span class="eyebrow">Step 2 of 4</span><h2 class="ln-h">Wallet linked</h2>' +
-      '<p class="ln-sub">' + esc(L.wallet.short) + " is linked to @" + esc(L.me.creator.handle) + ". This wallet will create your coin and receive creator fees.</p>" +
+      '<p class="ln-sub">' + esc(L.wallet.short) + " is linked to @" + esc(L.me.creator.handle) + ". This wallet will create your coin.</p>" +
       '<span class="okline"><i>' + okSvg + "</i>" + esc(L.wallet.name) + " · " + esc(L.wallet.short) + "</span>" +
       '<div class="ln-actions"><button class="btn btn-solid btn-wide mag" type="button" data-act="toReview">Continue</button><button class="ln-link" type="button" data-act="toWallet">Use another wallet</button></div>');
   }
@@ -515,7 +551,11 @@ export function initMinted(rootEl: HTMLElement): () => void {
       '<div class="buy"><label for="buyIn">First buy (optional)</label><div class="buy-in"><input id="buyIn" type="text" inputmode="decimal" value="' + esc(L.buy) + '" aria-describedby="buyHelp"><span>SOL</span></div>' +
       '<div class="qs">' + picks.map((v) => '<button class="q' + (v === L.buy ? " on" : "") + '" type="button" data-act="q" data-v="' + v + '">' + v + " SOL</button>").join("") + "</div>" +
       '<span class="ln-fine" id="buyHelp">Buy some of your own coin at launch. Max ' + max + " SOL. Shown publicly on your coin page.</span></div>" +
-      '<dl class="sum"><div><dt>Coin</dt><dd>' + esc(c.name) + " · $" + ticker(c.handle) + '</dd></div><div><dt>First buy</dt><dd id="sumBuy">' + esc(L.buy) + " SOL</dd></div><div><dt>Network and pump.fun fees</dt><dd>Shown in wallet</dd></div><div><dt>Platform fee</dt><dd>0 SOL</dd></div></dl>" +
+      '<div class="buy"><label>Creator rewards</label><div class="rw" role="radiogroup" aria-label="Creator rewards">' +
+        '<button class="opt' + (L.reward === "creator" ? " on" : "") + '" type="button" role="radio" aria-checked="' + (L.reward === "creator") + '" data-act="rw" data-v="creator"><b>To me</b><small>pump.fun creator fees go to your wallet. Claim them anytime on pump.fun.</small></button>' +
+        '<button class="opt' + (L.reward === "holders" ? " on" : "") + '" type="button" role="radio" aria-checked="' + (L.reward === "holders") + '" data-act="rw" data-v="holders"><b>To holders</b><small>pump.fun pays the creator fee to people holding your coin. You get none of it.</small></button>' +
+        '</div><span class="ln-fine">Locked at launch and shown publicly on your coin page.</span></div>' +
+      '<dl class="sum"><div><dt>Coin</dt><dd>' + esc(c.name) + " · $" + ticker(c.handle) + '</dd></div><div><dt>First buy</dt><dd id="sumBuy">' + esc(L.buy) + ' SOL</dd></div><div><dt>Creator rewards</dt><dd id="sumRw">' + (L.reward === "holders" ? "To holders" : "To me") + "</dd></div><div><dt>Network and pump.fun fees</dt><dd>Shown in wallet</dd></div><div><dt>Platform fee</dt><dd>0 SOL</dd></div></dl>" +
       '<div class="warn"><strong>This is your only launch</strong><p>Each X account and each wallet can launch one coin, ever. After you sign, @' + esc(c.handle) + " can never launch another coin here.</p>" +
       '<label class="agree" for="agree"><input id="agree" type="checkbox">I understand this can’t be undone</label></div><div id="rErr"></div>' +
       '<div class="ln-actions"><button class="btn btn-solid btn-wide mag" type="button" data-act="launch" id="goLaunch" disabled>Sign and launch on pump.fun</button><button class="ln-link" type="button" data-act="toWallet">Back</button></div>');
@@ -549,7 +589,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
     const t0 = performance.now();
     try {
       task(0, "run"); task(1, "run");
-      L.pending = await B().build(Number(L.buy) || 0);
+      L.pending = await B().build(Number(L.buy) || 0, L.reward);
       task(0, "ok", "IPFS"); task(1, "ok", "create_v2");
       await approveAndFinish(t0);
     } catch (e) {
@@ -656,6 +696,12 @@ export function initMinted(rootEl: HTMLElement): () => void {
     else if (a === "wallet") doWallet(b);
     else if (a === "sign") doSign(b);
     else if (a === "toReview") sReview();
+    else if (a === "rw") {
+      L.reward = b.getAttribute("data-v") === "holders" ? "holders" : "creator";
+      $$(".rw .opt").forEach((o) => { const on = o.getAttribute("data-v") === L.reward; o.classList.toggle("on", on); o.setAttribute("aria-checked", String(on)); });
+      $("#sumRw").textContent = L.reward === "holders" ? "To holders" : "To me";
+      pvEl("pvRw").textContent = L.reward === "holders" ? "To holders" : "To me";
+    }
     else if (a === "q") { const inp = $("#buyIn"); inp.value = b.getAttribute("data-v"); inp.dispatchEvent(new Event("input")); }
     else if (a === "launch") { if (L.agreed) sLaunch(); }
     else if (a === "retry") { $("#lSlot").innerHTML = ""; approveAndFinish(performance.now()); }
