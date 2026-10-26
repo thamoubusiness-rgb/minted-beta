@@ -2,6 +2,7 @@
 import BN from "bn.js";
 import {
   ComputeBudgetProgram,
+  Connection,
   PublicKey,
   TransactionInstruction,
   TransactionMessage,
@@ -11,6 +12,24 @@ import * as pump from "@pump-fun/pump-sdk";
 import { OnlinePumpSdk, PUMP_SDK } from "@pump-fun/pump-sdk";
 import { config } from "./config";
 import { connection } from "./solana";
+
+// Dashboard reads use a connection that fails fast on rate limits instead of retrying for many seconds.
+// (A private RPC such as Helius in SOLANA_RPC_URL removes these limits.)
+const fast = new Connection(config.rpcUrl, { commitment: "confirmed", disableRetryOnRateLimit: true });
+
+/** Resolves to null if `p` takes longer than `ms`. */
+export const within = <T>(p: Promise<T>, ms: number): Promise<T | null> =>
+  Promise.race([p, new Promise<null>((res) => setTimeout(() => res(null), ms))]);
+
+// Short-lived cache so repeated dashboard loads don't hit the RPC every time.
+const cache = new Map<string, { at: number; v: unknown }>();
+export async function cached<T>(key: string, ttlMs: number, fn: () => Promise<T>): Promise<T> {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.at < ttlMs) return hit.v as T;
+  const v = await fn();
+  if (v != null) cache.set(key, { at: Date.now(), v });
+  return v;
+}
 
 export const TOKEN_2022 = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
 const ATA_PROGRAM = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
@@ -118,7 +137,7 @@ export async function buildBuyTx(opts: { mint: PublicKey; user: PublicKey; lampo
 /** SOL waiting in the creator's fee vault (pump.fun + PumpSwap), in SOL. Null if it can't be read. */
 export async function creatorFeesSol(creator: PublicKey): Promise<number | null> {
   try {
-    const sdk = new OnlinePumpSdk(connection);
+    const sdk = new OnlinePumpSdk(fast);
     const f = pick(["getCreatorVaultBalanceBothPrograms", "getCreatorVaultBalance"], sdk);
     if (!f) return null;
     const v = await f(creator);
@@ -131,7 +150,7 @@ export async function creatorFeesSol(creator: PublicKey): Promise<number | null>
 
 /** Holders from the largest token accounts (the bonding curve itself is not counted). Max 20 from public RPC. */
 export async function topHolders(mint: PublicKey) {
-  const largest = await connection.getTokenLargestAccounts(mint, "confirmed");
+  const largest = await fast.getTokenLargestAccounts(mint, "confirmed");
   const curveAta = ataOf(bondingCurveOf(mint), mint).toBase58();
   const rows = largest.value
     .filter((a) => a.address.toBase58() !== curveAta && Number(a.uiAmount || 0) > 0)
@@ -142,9 +161,9 @@ export async function topHolders(mint: PublicKey) {
 /** The creator's own buys and sells of their coin, newest first (last ~10 transactions). */
 export async function creatorTrades(owner: PublicKey, mint: PublicKey) {
   const ata = ataOf(owner, mint);
-  const sigs = await connection.getSignaturesForAddress(ata, { limit: 10 }, "confirmed");
+  const sigs = await fast.getSignaturesForAddress(ata, { limit: 10 }, "confirmed");
   if (!sigs.length) return [];
-  const txs = await connection.getParsedTransactions(sigs.map((s) => s.signature), { maxSupportedTransactionVersion: 0, commitment: "confirmed" });
+  const txs = await fast.getParsedTransactions(sigs.map((s) => s.signature), { maxSupportedTransactionVersion: 0, commitment: "confirmed" });
   const ownerStr = owner.toBase58(), mintStr = mint.toBase58();
   const out: { sig: string; at: string | null; side: "buy" | "sell"; tokens: number; sol: number }[] = [];
   txs.forEach((tx, i) => {

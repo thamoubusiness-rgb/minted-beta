@@ -3,7 +3,7 @@ import { holderRewardsCreator, pumpCoinUrl } from "@/lib/pump";
 import { currentCreator, fail, json } from "@/lib/session";
 import { toPubkey } from "@/lib/solana";
 import { refreshStale } from "@/lib/stats";
-import { creatorFeesSol, creatorTrades, topHolders } from "@/lib/trade";
+import { cached, creatorFeesSol, creatorTrades, topHolders, within } from "@/lib/trade";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export async function GET() {
 
   const [t0] = await sql<{ mint: string }[]>`select mint from tokens where creator_id = ${c.id}`;
   if (!t0) return json({ creator: { handle: c.handle, name: c.display_name, avatar: c.avatar_url }, token: null });
-  await refreshStale(1, t0.mint).catch(() => {});
+  await within(refreshStale(1, t0.mint).catch(() => {}), 4000);
 
   const [t] = await sql<{
     mint: string; symbol: string; name: string; creator_wallet: string; market_cap_usd: string | null; market_cap_sol: string | null;
@@ -30,10 +30,12 @@ export async function GET() {
   const wallet = toPubkey(t.creator_wallet)!;
   const feeOwner = t.reward_mode === "holders" ? toPubkey(holderRewardsCreator(t.mint))! : wallet;
 
+  // Each live read is cached for 2 minutes and capped at 5 seconds, so the dashboard always loads quickly.
+  const soft = <T>(label: string, p: Promise<T>) => p.catch((e) => { console.error(`${label} read failed`, e instanceof Error ? e.message : e); return null; });
   const [fees, holders, trades] = await Promise.all([
-    creatorFeesSol(feeOwner),
-    topHolders(mint).catch((e) => { console.error("holders read failed", e instanceof Error ? e.message : e); return null; }),
-    creatorTrades(wallet, mint).catch((e) => { console.error("trades read failed", e instanceof Error ? e.message : e); return null; }),
+    within(cached(`fees:${feeOwner.toBase58()}`, 120_000, () => creatorFeesSol(feeOwner)), 5000),
+    within(soft("holders", cached(`holders:${t.mint}`, 120_000, () => topHolders(mint))), 5000),
+    within(soft("trades", cached(`trades:${t.mint}`, 120_000, () => creatorTrades(wallet, mint))), 5000),
   ]);
 
   const mcap = t.market_cap_usd ? Number(t.market_cap_usd) : null;

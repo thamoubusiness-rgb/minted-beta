@@ -74,12 +74,12 @@ export async function GET(_req: Request, ctx: { params: Promise<{ handle: string
           </div>
         </div>
 
-        <div style={{ display: "flex", marginTop: "auto", alignItems: "flex-end", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", flexDirection: "column", marginTop: "auto", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
             <div style={{ fontSize: 28, color: "#d7dbd0" }}>{sub}</div>
-            <div style={{ fontSize: 22, color: "#7d8277" }}>{`CA ${coin.mint}`}</div>
+            <div style={{ fontSize: 26, color: LIME, whiteSpace: "nowrap" }}>{`${host()}/c/${coin.handle}`}</div>
           </div>
-          <div style={{ fontSize: 26, color: LIME }}>{`${host()}/c/${coin.handle}`}</div>
+          <div style={{ fontSize: 20, color: "#7d8277", letterSpacing: 0.5 }}>{`CA ${coin.mint}`}</div>
         </div>
       </div>
     ),
