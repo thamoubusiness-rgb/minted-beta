@@ -121,6 +121,19 @@ export async function buildCreateTx(opts: {
   };
 }
 
+/** Whether pump.fun currently accepts holder-reward coins on this network (cached for 5 minutes). */
+let holderCache: { at: number; on: boolean } | null = null;
+export async function holderRewardsAvailable(): Promise<boolean> {
+  if (holderCache && Date.now() - holderCache.at < 5 * 60_000) return holderCache.on;
+  try {
+    const g = (await new OnlinePumpSdk(connection).fetchGlobal()) as { isHolderRewardEnabled?: boolean };
+    holderCache = { at: Date.now(), on: g.isHolderRewardEnabled !== false };
+  } catch {
+    holderCache = { at: Date.now(), on: false };
+  }
+  return holderCache.on;
+}
+
 const PUMP_PROGRAM_ID = new PublicKey("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P");
 
 /** On a holder-reward coin the on-chain creator is this PDA (seeds "holder-rewards" + mint), not a wallet. */

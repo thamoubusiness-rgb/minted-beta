@@ -544,7 +544,8 @@ export function initMinted(rootEl: HTMLElement): () => void {
   /* ----- step 3: review ----- */
   function sReview() {
     setStep(2); L.agreed = false;
-    const c = L.me.creator, max = L.me.config.maxBuySol;
+    const c = L.me.creator, max = L.me.config.maxBuySol, holdersOn = L.me.config.holderRewards !== false;
+    if (!holdersOn) L.reward = "creator";
     const picks = ["0", "0.1", "0.5", "1", "2"].filter((v) => Number(v) <= max);
     view('<span class="eyebrow">Step 3 of 4</span><h2 class="ln-h">Review your coin</h2>' +
       '<p class="ln-sub">Name, ticker, photo and bio come from X and are locked. Your first buy is the only thing you set.</p>' +
@@ -553,7 +554,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
       '<span class="ln-fine" id="buyHelp">Buy some of your own coin at launch. Max ' + max + " SOL. Shown publicly on your coin page.</span></div>" +
       '<div class="buy"><label>Creator rewards</label><div class="rw" role="radiogroup" aria-label="Creator rewards">' +
         '<button class="opt' + (L.reward === "creator" ? " on" : "") + '" type="button" role="radio" aria-checked="' + (L.reward === "creator") + '" data-act="rw" data-v="creator"><b>To me</b><small>pump.fun creator fees go to your wallet. Claim them anytime on pump.fun.</small></button>' +
-        '<button class="opt' + (L.reward === "holders" ? " on" : "") + '" type="button" role="radio" aria-checked="' + (L.reward === "holders") + '" data-act="rw" data-v="holders"><b>To holders</b><small>pump.fun pays the creator fee to people holding your coin. You get none of it.</small></button>' +
+        '<button class="opt' + (L.reward === "holders" ? " on" : "") + '" type="button" role="radio" aria-checked="' + (L.reward === "holders") + '" data-act="rw" data-v="holders"' + (holdersOn ? "" : " disabled") + '><b>To holders</b><small>' + (holdersOn ? "pump.fun pays the creator fee to people holding your coin. You get none of it." : "pump.fun hasn’t switched holder rewards on for this network yet.") + "</small></button>" +
         '</div><span class="ln-fine">Locked at launch and shown publicly on your coin page.</span></div>' +
       '<dl class="sum"><div><dt>Coin</dt><dd>' + esc(c.name) + " · $" + ticker(c.handle) + '</dd></div><div><dt>First buy</dt><dd id="sumBuy">' + esc(L.buy) + ' SOL</dd></div><div><dt>Creator rewards</dt><dd id="sumRw">' + (L.reward === "holders" ? "To holders" : "To me") + "</dd></div><div><dt>Network and pump.fun fees</dt><dd>Shown in wallet</dd></div><div><dt>Platform fee</dt><dd>0 SOL</dd></div></dl>" +
       '<div class="warn"><strong>This is your only launch</strong><p>Each X account and each wallet can launch one coin, ever. After you sign, @' + esc(c.handle) + " can never launch another coin here.</p>" +

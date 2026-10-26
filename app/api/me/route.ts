@@ -1,4 +1,5 @@
 import { config } from "@/lib/config";
+import { holderRewardsAvailable } from "@/lib/pump";
 import { sql } from "@/lib/db";
 import { eligibility } from "@/lib/eligibility";
 import { currentCreator, json } from "@/lib/session";
@@ -27,6 +28,6 @@ export async function GET() {
     wallet: link?.wallet ?? null,
     token: token ? { mint: token.mint, symbol: token.symbol, launchedAt: token.launched_at } : null,
     eligibility: eligibility(c, Boolean(token)),
-    config: { maxBuySol: config.maxBuySol },
+    config: { maxBuySol: config.maxBuySol, holderRewards: await holderRewardsAvailable() },
   });
 }
