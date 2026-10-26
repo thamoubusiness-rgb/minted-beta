@@ -1,10 +1,9 @@
-import { PublicKey } from "@solana/web3.js";
 import { config } from "@/lib/config";
 import { sql } from "@/lib/db";
 import { settleOpenLaunches } from "@/lib/launch";
-import { curveMarketCapSol, readCurve } from "@/lib/pump";
+import { refreshTokenStats } from "@/lib/stats";
 import type { CreatorRow } from "@/lib/db";
-import { connection, solUsd } from "@/lib/solana";
+import { solUsd } from "@/lib/solana";
 import { lookupUsers, upsertCreator } from "@/lib/x";
 
 export const runtime = "nodejs";
@@ -36,26 +35,7 @@ export async function GET(req: Request) {
 
   let updated = 0;
   for (const t of tokens) {
-    const curve = (await readCurve(t.mint)) as Parameters<typeof curveMarketCapSol>[0] & { complete?: boolean } | null;
-    if (!curve) continue;
-    const mcapSol = curveMarketCapSol(curve);
-
-    // Creator transparency: how much of their own coin the creator still holds.
-    let balance: number | null = null;
-    try {
-      const accs = await connection.getParsedTokenAccountsByOwner(new PublicKey(t.creator_wallet), { mint: new PublicKey(t.mint) });
-      balance = accs.value.reduce((s, a) => s + Number(a.account.data.parsed.info.tokenAmount.uiAmount || 0), 0);
-    } catch { /* keep last value */ }
-
-    await sql`
-      update tokens set
-        market_cap_sol = ${curve.complete ? sql`market_cap_sol` : mcapSol},
-        market_cap_usd = ${curve.complete ? sql`market_cap_usd` : usd ? mcapSol * usd : null},
-        graduated = ${Boolean(curve.complete)},
-        creator_balance = coalesce(${balance}, creator_balance),
-        stats_updated_at = now()
-      where mint = ${t.mint}`;
-    updated++;
+    if (await refreshTokenStats(t, usd).catch(() => false)) updated++;
   }
 
   // Once a day (the first run after midnight UTC), re-read X profiles in batches of 100.

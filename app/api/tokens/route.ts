@@ -1,6 +1,7 @@
 import { sql } from "@/lib/db";
 import { pumpCoinUrl } from "@/lib/pump";
 import { json } from "@/lib/session";
+import { refreshStale } from "@/lib/stats";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,8 @@ export async function GET(req: Request) {
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
   const sort = url.searchParams.get("sort") === "mcap" ? "mcap" : "new";
   const before = url.searchParams.get("before");
+  // Fresh numbers even when the scheduled job is not running (e.g. while the site is private).
+  await refreshStale(4).catch(() => {});
 
   const rows = await sql<Row[]>`
     select t.mint, t.name, t.symbol, t.image_uri, t.followers_at_launch, t.market_cap_usd, t.graduated, t.launched_at,

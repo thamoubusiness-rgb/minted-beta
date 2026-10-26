@@ -139,7 +139,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
   /* ---------- ticker strip ---------- */
   const strip = $("#strip");
   let sx = 0, stripW = 0;
-  const stripItem = (c) => '<span class="strip-item">' + avatar(c, "av-sm") + "@" + esc(c.h) + " minted <b>$" + ticker(c.h) + "</b></span>";
+  const stripItem = (c) => '<span class="strip-item">' + avatar(c, "av-sm") + "@" + esc(c.h) + " launched <b>$" + ticker(c.h) + "</b></span>";
   function buildStrip() {
     strip.parentElement.style.display = creators.length ? "" : "none";
     if (!creators.length) return;
@@ -641,6 +641,12 @@ export function initMinted(rootEl: HTMLElement): () => void {
     setStep(4); pvLive(true);
     const tk = L.me.token, c = L.me.creator;
     if (c) pvProfile(c);
+    // Show the launched coin's real details, not the draft defaults.
+    if (tk) {
+      if (tk.wallet) pvSet("pvWallet", tk.wallet.slice(0, 4) + "…" + tk.wallet.slice(-4));
+      pvSet("pvBuy", tk.initialBuySol ? tk.initialBuySol + " SOL" : "None");
+      pvSet("pvRw", tk.rewardMode === "holders" ? "To holders" : "To me");
+    }
     view('<span class="eyebrow">One coin per account</span><h2 class="ln-h">You’ve already launched</h2>' +
       '<p class="ln-sub">@' + esc(c?.handle) + " launched $" + esc(tk?.symbol) + " on pump.fun. Each X account gets one coin, so there’s nothing more to launch here.</p>" +
       '<div class="ln-actions"><a class="btn btn-solid btn-wide mag" href="/c/' + encodeURIComponent(c?.handle || "") + '">View my coin page</a><button class="ln-link" type="button" data-act="close">Close</button></div>');
