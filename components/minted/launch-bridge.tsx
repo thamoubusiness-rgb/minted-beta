@@ -49,7 +49,7 @@ export default function LaunchBridge() {
 
   useEffect(() => {
     const bridge: MintedBridge = {
-      cluster: process.env.NEXT_PUBLIC_SOLANA_CLUSTER || "devnet",
+      cluster: process.env.NEXT_PUBLIC_SOLANA_CLUSTER || "mainnet-beta",
 
       me: () => api("/api/me"),
 

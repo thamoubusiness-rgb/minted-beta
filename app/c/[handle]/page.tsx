@@ -24,5 +24,5 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const coin = await getCoin((await params).handle);
   if (!coin) notFound();
-  return <CoinPage coin={coin} cluster={process.env.NEXT_PUBLIC_SOLANA_CLUSTER || "devnet"} />;
+  return <CoinPage coin={coin} cluster={process.env.NEXT_PUBLIC_SOLANA_CLUSTER || "mainnet-beta"} />;
 }
