@@ -153,21 +153,21 @@ export async function readCurve(mint: string) {
   try {
     const curve = await sdk.fetchBondingCurve(new PublicKey(mint));
     return curve ?? null;
-  } catch {
+  } catch (e) {
+    console.error("readCurve failed", mint, e instanceof Error ? e.message : e);
     return null;
   }
 }
 
-/** Market cap in SOL from bonding-curve reserves (pump.fun coins have 6 decimals). */
-export function curveMarketCapSol(curve: {
-  virtualSolReserves: BN;
-  virtualTokenReserves: BN;
-  tokenTotalSupply: BN;
-}): number {
-  const vSol = Number(curve.virtualSolReserves.toString()) / 1e9;
-  const vTok = Number(curve.virtualTokenReserves.toString()) / 1e6;
-  const supply = Number(curve.tokenTotalSupply.toString()) / 1e6;
-  if (!vTok) return 0;
+/** Market cap in SOL from bonding-curve reserves (pump.fun coins have 6 decimals, 1B supply). */
+export function curveMarketCapSol(curve: Record<string, unknown>): number {
+  const n = (v: unknown) => (v == null ? NaN : Number((v as { toString(): string }).toString()));
+  // Newer SDK versions name the SOL side "quote" (coins can be quoted in other mints).
+  const vSol = n(curve.virtualSolReserves ?? curve.virtualQuoteReserves) / 1e9;
+  const vTok = n(curve.virtualTokenReserves) / 1e6;
+  const supplyRaw = n(curve.tokenTotalSupply);
+  const supply = Number.isFinite(supplyRaw) ? supplyRaw / 1e6 : 1_000_000_000;
+  if (!Number.isFinite(vSol) || !Number.isFinite(vTok) || !vTok) throw new Error(`Unexpected bonding curve fields: ${Object.keys(curve).join(",")}`);
   return (vSol / vTok) * supply;
 }
 

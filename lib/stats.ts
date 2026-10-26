@@ -5,8 +5,8 @@ import { connection, solUsd } from "./solana";
 
 /** Refreshes one coin's market cap, graduation and creator holdings from the chain. */
 export async function refreshTokenStats(t: { mint: string; creator_wallet: string }, usd?: number | null): Promise<boolean> {
-  const curve = (await readCurve(t.mint)) as (Parameters<typeof curveMarketCapSol>[0] & { complete?: boolean }) | null;
-  if (!curve) return false;
+  const curve = (await readCurve(t.mint)) as (Record<string, unknown> & { complete?: boolean }) | null;
+  if (!curve) { console.error("stats: no bonding curve for", t.mint); return false; }
   const price = usd === undefined ? await solUsd() : usd;
   const mcapSol = curveMarketCapSol(curve);
 
@@ -39,5 +39,5 @@ export async function refreshStale(max = 4, mint?: string): Promise<void> {
     order by stats_updated_at asc nulls first limit ${max}`;
   if (!rows.length) return;
   const usd = await solUsd();
-  await Promise.all(rows.map((r) => refreshTokenStats(r, usd).catch(() => false)));
+  await Promise.all(rows.map((r) => refreshTokenStats(r, usd).catch((e) => { console.error("stats refresh failed", r.mint, e instanceof Error ? e.message : e); return false; })));
 }
