@@ -2,7 +2,7 @@
 const num = (v: string | undefined, d: number) => (v && !Number.isNaN(Number(v)) ? Number(v) : d);
 
 export const config = {
-  siteName: process.env.NEXT_PUBLIC_SITE_NAME || "minted",
+  siteName: "NAMA", // brand name (fixed, so an old NEXT_PUBLIC_SITE_NAME value can't override it)
   siteUrl: (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, ""),
   cluster: process.env.NEXT_PUBLIC_SOLANA_CLUSTER || "mainnet-beta",
   // Set SOLANA_RPC_URL to a private RPC (e.g. Helius) for reliable launches; the public endpoint is rate-limited.

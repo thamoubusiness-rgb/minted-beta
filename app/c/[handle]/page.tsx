@@ -10,8 +10,8 @@ type Props = { params: Promise<{ handle: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const coin = await getCoin((await params).handle);
-  if (!coin) return { title: "Coin not found — minted" };
-  const title = `${coin.name} ($${coin.symbol}) — verified on minted`;
+  if (!coin) return { title: "Coin not found — NAMA" };
+  const title = `${coin.name} ($${coin.symbol}) — verified on NAMA`;
   const description = `The verified coin of @${coin.handle}. Contract ${coin.mint}.`;
   return {
     title,

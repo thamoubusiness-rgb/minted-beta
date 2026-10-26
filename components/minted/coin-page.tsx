@@ -17,7 +17,7 @@ const Check = () => (
 );
 const Badge = ({ size = 18 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" role="img" aria-label="Verified">
-    <path fill="#fff" d="M12 1.5l2.4 1.8 3-.2.9 2.9 2.4 1.8-1 2.8 1 2.8-2.4 1.8-.9 2.9-3-.2L12 22.5l-2.4-1.8-3 .2-.9-2.9L3.3 16.2l1-2.8-1-2.8 2.4-1.8.9-2.9 3 .2z" />
+    <path fill="#C6FF34" d="M12 1.5l2.4 1.8 3-.2.9 2.9 2.4 1.8-1 2.8 1 2.8-2.4 1.8-.9 2.9-3-.2L12 22.5l-2.4-1.8-3 .2-.9-2.9L3.3 16.2l1-2.8-1-2.8 2.4-1.8.9-2.9 3 .2z" />
     <path d="M7.8 12.2l2.6 2.6 5.4-5.6" stroke="#000" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
@@ -98,7 +98,7 @@ export default function CoinPage({ coin, cluster }: { coin: CoinView; cluster: s
               <div className="cp-card">
                 <h3>How this coin was verified</h3>
                 <ol className="cp-proof">
-                  <li><i><Check /></i><div><b>X account signed in</b><span>@{coin.handle} signed in to minted with X.</span></div></li>
+                  <li><i><Check /></i><div><b>X account signed in</b><span>@{coin.handle} signed in to NAMA with X.</span></div></li>
                   <li><i><Check /></i><div><b>Wallet proved</b><span>{short(coin.wallet)} signed a message linking it to @{coin.handle}.</span></div></li>
                   <li><i><Check /></i><div><b>{coin.rewardMode === "holders" ? "Launched by the linked wallet" : "On-chain creator matches"}</b><span>{coin.rewardMode === "holders"
                     ? <>{short(coin.wallet)} signed and paid for the launch. Creator fees go to holders through pump.fun holder rewards.</>
@@ -120,7 +120,7 @@ export default function CoinPage({ coin, cluster }: { coin: CoinView; cluster: s
                 <p className="ln-fine">Opens pump.fun. Check the address matches before you buy.</p>
               </div>
               <div className="cp-note" role="note">
-                This is the only coin @{coin.handle} can launch on minted. A coin using this name or photo with a different address was not launched by them.
+                This is the only coin @{coin.handle} can launch on NAMA. A coin using this name or photo with a different address was not launched by them.
               </div>
               <div className="cp-note" role="note">
                 Creator coins are highly speculative and can lose all their value. Read the <a href="/risk">risk notice</a>.

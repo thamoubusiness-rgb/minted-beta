@@ -1,5 +1,5 @@
 // @ts-nocheck
-// All interactive behaviour for the minted page: scroll scenes, live directory and the launch flow.
+// All interactive behaviour for the NAMA page: scroll scenes, live directory and the launch flow.
 // Real services are reached through window.__minted (see launch-bridge.tsx).
 import Lenis from "lenis";
 
@@ -46,7 +46,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
   });
 
   /* ---------- helpers ---------- */
-  const GRADS = ["linear-gradient(135deg,#38bdf8,#2563eb)", "linear-gradient(135deg,#e879f9,#7c3aed)", "linear-gradient(135deg,#fbbf24,#ea580c)", "linear-gradient(135deg,#34d399,#0d9488)"];
+  const GRADS = ["linear-gradient(135deg,#9BE60F,#2f4706)", "linear-gradient(135deg,#7cc400,#1d2a04)", "linear-gradient(135deg,#b5f02a,#3a5509)", "linear-gradient(135deg,#6fa800,#16200a)"];
   const gradFor = (s) => GRADS[[...String(s)].reduce((a, c) => a + c.charCodeAt(0), 0) % GRADS.length];
   const ticker = (h) => String(h).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10) || "COIN";
   const initials = (n) => { const p = String(n || "?").trim().split(/\s+/); return (p.length > 1 ? p[0][0] + p[p.length - 1][0] : p[0].slice(0, 2)).toUpperCase(); };
@@ -56,7 +56,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const safeUrl = (u) => (typeof u === "string" && /^https:\/\//.test(u) ? esc(u) : "");
   const avatar = (c, cls) => '<span class="av ' + cls + '" style="background:' + gradFor(c.h) + '">' + (safeUrl(c.img) ? '<img src="' + safeUrl(c.img) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : initials(c.n)) + "</span>";
-  const check = '<svg width="14" height="14" viewBox="0 0 24 24" role="img" aria-label="Verified"><path fill="#fff" d="M12 1.5l2.4 1.8 3-.2.9 2.9 2.4 1.8-1 2.8 1 2.8-2.4 1.8-.9 2.9-3-.2L12 22.5l-2.4-1.8-3 .2-.9-2.9L3.3 16.2l1-2.8-1-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M7.8 12.2l2.6 2.6 5.4-5.6" stroke="#000" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const check = '<svg width="14" height="14" viewBox="0 0 24 24" role="img" aria-label="Verified"><path fill="#C6FF34" d="M12 1.5l2.4 1.8 3-.2.9 2.9 2.4 1.8-1 2.8 1 2.8-2.4 1.8-.9 2.9-3-.2L12 22.5l-2.4-1.8-3 .2-.9-2.9L3.3 16.2l1-2.8-1-2.8 2.4-1.8.9-2.9 3 .2z"/><path d="M7.8 12.2l2.6 2.6 5.4-5.6" stroke="#000" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const minsAgo = (m) => new Date(Date.now() - m * 60000).toISOString();
 
   /* ---------- directory data ---------- */
@@ -488,11 +488,11 @@ export function initMinted(rootEl: HTMLElement): () => void {
     const opts = ws.map((w) =>
       '<button class="opt" type="button" data-act="wallet" data-w="' + esc(w.name) + '"><span class="wl" style="background:#1a1a1a">' +
       (w.icon ? '<img src="' + esc(w.icon) + '" alt="">' : esc(w.name[0])) + "</span><span><b>" + esc(w.name) + "</b><small>" +
-      (w.installed ? "Ready to connect" : w.mobileApp ? "Opens minted in the " + esc(w.name) + " app" : "Not installed") + '</small></span><span class="end">' + (w.installed ? '<span class="det">Detected</span>' : w.mobileApp ? "Open app" : "Install") +
+      (w.installed ? "Ready to connect" : w.mobileApp ? "Opens NAMA in the " + esc(w.name) + " app" : "Not installed") + '</small></span><span class="end">' + (w.installed ? '<span class="det">Detected</span>' : w.mobileApp ? "Open app" : "Install") +
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></span></button>').join("");
     view('<span class="eyebrow">Step 2 of 4</span><h2 class="ln-h">Connect your Solana wallet</h2>' +
       '<p class="ln-sub">This wallet creates your coin and, unless you send them to holders, receives your creator fees. Choose carefully: it can’t be changed after launch.</p>' +
-      (mobileNoWallet ? '<p class="mob">On a phone, wallets work inside their own app. Pick yours below: minted opens there and you sign in with X once more.</p>' : "") +
+      (mobileNoWallet ? '<p class="mob">On a phone, wallets work inside their own app. Pick yours below: NAMA opens there and you sign in with X once more.</p>' : "") +
       '<div class="opts">' + opts + '</div><div id="wErr"></div><div class="ln-actions"><button class="ln-link" type="button" data-act="toX">Back</button></div>');
   }
   async function doWallet(btn) {
@@ -628,9 +628,9 @@ export function initMinted(rootEl: HTMLElement): () => void {
   function sDone(token) {
     setStep(4); pvLive(true);
     const h = L.me.creator.handle, t = "$" + esc(token.symbol), m = token.mint, short = m.slice(0, 4) + "…" + m.slice(-8);
-    const text = encodeURIComponent("I just launched my verified coin $" + token.symbol + " on minted. The only official one. " + location.origin + "/c/" + h);
+    const text = encodeURIComponent("I just launched my verified coin $" + token.symbol + " on NAMA. The only official one. " + location.origin + "/c/" + h);
     view('<span class="eyebrow">Launched</span><h2 class="ln-h">You’re live, @' + esc(h) + ".</h2>" +
-      '<p class="ln-sub">' + t + " is trading on pump.fun and listed on minted with your Verified badge.</p>" +
+      '<p class="ln-sub">' + t + " is trading on pump.fun and listed on NAMA with your Verified badge.</p>" +
       '<div style="display:flex;flex-direction:column;gap:8px"><span class="ln-fine">Contract address</span><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="chip" id="mintTxt" style="user-select:all">' + esc(short) + '</span><button class="btn btn-ghost" type="button" data-act="copy" data-mint="' + esc(m) + '" style="min-height:38px">Copy</button></div></div>' +
       '<div class="ln-actions"><a class="btn btn-solid btn-wide mag" href="https://x.com/intent/post?text=' + text + '" target="_blank" rel="noopener">' + xSvg + 'Share on X</a><a class="btn btn-ghost btn-wide" href="/c/' + encodeURIComponent(h) + '">View my coin page</a><a class="ln-link" href="' + safeUrl(token.url) + '" target="_blank" rel="noopener">Open on pump.fun</a></div>' +
       '<p class="ln-fine">Tip: pin your post so fans find the real coin.</p>');
@@ -652,7 +652,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
     cv.width = r.width * dpr; cv.height = lnPanel.scrollHeight * dpr; cv.style.height = lnPanel.scrollHeight + "px";
     const x = cv.getContext("2d"); x.scale(dpr, dpr);
     const src = pv.getBoundingClientRect(), ox = src.left - r.left + 48, oy = src.top - r.top + lnPanel.scrollTop + 52;
-    const cols = ["#ffffff", "#a5f3fc", "#c4b5fd", "#34d399"], ps = [];
+    const cols = ["#ffffff", "#C6FF34", "#E4FF8F", "#8FDB00"], ps = [];
     for (let i = 0; i < 70; i++) { const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 6; ps.push({ x: ox, y: oy, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 2, r: 1 + Math.random() * 2.4, c: cols[i % 4], l: 1 }); }
     const tickB = () => {
       x.clearRect(0, 0, cv.width, cv.height); let any = false;

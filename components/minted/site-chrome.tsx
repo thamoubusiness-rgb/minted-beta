@@ -1,5 +1,6 @@
 // Header and footer for the inner pages (coin pages, legal pages).
 import Link from "next/link";
+import { NamaLogo } from "./brand";
 
 export const Sparkle = ({ size = 17, plus = true }: { size?: number; plus?: boolean }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -12,9 +13,8 @@ export function SiteHeader() {
   return (
     <header className="nav scrolled" id="nav">
       <div className="wrap">
-        <Link className="logo" href="/" aria-label="minted home">
-          <span className="logo-mark"><Sparkle /></span>
-          minted
+        <Link className="logo" href="/" aria-label="NAMA home">
+          <NamaLogo />
         </Link>
         <nav className="links" aria-label="Main">
           <Link href="/#explore">Explore</Link>
@@ -40,7 +40,7 @@ export function SiteFooter() {
   return (
     <footer id="footer">
       <div className="wrap">
-        <p className="main-line">minted is a verification layer for creator coins. Your wallet always stays yours.</p>
+        <p className="main-line">NAMA is a verification layer for creator coins. Your wallet always stays yours.</p>
         <p className="fine">Verified means a coin was launched by the real X account. It is not a judgment on value and not financial advice.</p>
         <FooterLinks />
       </div>

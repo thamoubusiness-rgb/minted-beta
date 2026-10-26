@@ -78,9 +78,9 @@ export default function LaunchBridge() {
         const w = walletsRef.current.find((x) => x.adapter.name === name);
         if (!w || (w.readyState !== WalletReadyState.Installed && w.readyState !== WalletReadyState.Loadable)) {
           if (isMobile() && DEEPLINK[name]) {
-            // On a phone: reopen minted inside the wallet app. Sign-in is kept, the panel reopens there.
+            // On a phone: reopen NAMA inside the wallet app. Sign-in is kept, the panel reopens there.
             window.location.href = DEEPLINK[name](reopenUrl());
-            throw Object.assign(new Error(`Opening minted in the ${name} app…`), { code: "redirecting" });
+            throw Object.assign(new Error(`Opening NAMA in the ${name} app…`), { code: "redirecting" });
           }
           window.open(INSTALL[name] || w?.adapter.url || "https://phantom.com/download", "_blank", "noopener");
           throw Object.assign(new Error(`${name} isn't installed. Install it, refresh this page and try again.`), { code: "not_installed" });

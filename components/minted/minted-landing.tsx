@@ -9,6 +9,7 @@ import "./minted.css";
 
 import { geist, geistMono } from "./fonts";
 import { FooterLinks } from "./site-chrome";
+import { NamaLogo, NamaMark } from "./brand";
 
 /* helpers */
 const d = (v: string) => ({ ["--d" as string]: v }) as CSSProperties;
@@ -23,7 +24,7 @@ function Split({ text, softFrom = -1 }: { text: string; softFrom?: number }) {
             className="w"
             style={{
               transitionDelay: `${(i * 0.06).toFixed(2)}s`,
-              ...(softFrom > -1 && i >= softFrom ? { color: "rgba(255,255,255,.35)" } : {}),
+              ...(softFrom > -1 && i >= softFrom ? { color: "var(--lime)" } : {}),
             }}
           >
             {w}
@@ -84,9 +85,8 @@ export default function MintedLanding() {
         {/* NAV */}
         <header className="nav" id="nav">
           <div className="wrap">
-            <a className="logo" href="#top" aria-label="minted home">
-              <span className="logo-mark"><Sparkle /></span>
-              minted
+            <a className="logo" href="#top" aria-label="NAMA home">
+              <NamaLogo />
             </a>
             <nav className="links" id="links" aria-label="Sections">
               <span className="pill-bg" id="pillBg" aria-hidden="true" />
@@ -176,7 +176,7 @@ export default function MintedLanding() {
                       <div className="coin-top">
                         <div className="coin" id="coin">
                           <div className="coin-face front"><div className="av">YN</div><span className="shine" /></div>
-                          <div className="coin-face back"><Sparkle size={34} plus={false} /></div>
+                          <div className="coin-face back"><NamaMark size={44} edge={14} glow={false} /></div>
                         </div>
                         <div>
                           <div className="coin-name">Your Name</div>
@@ -307,8 +307,8 @@ export default function MintedLanding() {
                   <div className="plot" id="plot">
                     <svg viewBox="0 0 960 170" preserveAspectRatio="none" aria-hidden="true">
                       <defs>
-                        <linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#a5f3fc" stopOpacity=".14" /><stop offset="1" stopColor="#a5f3fc" stopOpacity="0" /></linearGradient>
-                        <linearGradient id="gl" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#6b6b6b" /><stop offset=".7" stopColor="#d4d4d4" /><stop offset="1" stopColor="#a5f3fc" /></linearGradient>
+                        <linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#C6FF34" stopOpacity=".14" /><stop offset="1" stopColor="#C6FF34" stopOpacity="0" /></linearGradient>
+                        <linearGradient id="gl" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#4a6b0a" /><stop offset=".6" stopColor="#9BE60F" /><stop offset="1" stopColor="#C6FF34" /></linearGradient>
                       </defs>
                       <g className="gridlines"><line x1="0" x2="960" y1="0.5" y2="0.5" /><line x1="0" x2="960" y1="85" y2="85" /><line x1="0" x2="960" y1="169.5" y2="169.5" /></g>
                       <path className="chart-area" id="area" fill="url(#ga)" />
@@ -338,12 +338,12 @@ export default function MintedLanding() {
         {/* FOOTER */}
         <footer id="footer">
           <div className="wrap">
-            <p className="main-line">minted is a verification layer for creator coins. Your wallet always stays yours.</p>
+            <p className="main-line">NAMA is a verification layer for creator coins. Your wallet always stays yours.</p>
             <p className="fine">Verified means a coin was launched by the real X account. It is not a judgment on value and not financial advice.</p>
             <p className="fine">Not affiliated with X Corp. or pump.fun.{DEMO ? " Demo data shown." : ""}</p>
             <FooterLinks />
           </div>
-          <div className="wordmark" id="wordmark" aria-hidden="true">minted</div>
+          <div className="wordmark" id="wordmark" aria-hidden="true">NAMA</div>
         </footer>
       </div>
 
@@ -363,7 +363,7 @@ function LaunchPanel() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
         </button>
         <aside className="ln-rail">
-          <span className="logo"><span className="logo-mark"><Sparkle /></span>minted</span>
+          <span className="logo"><NamaLogo size={28} /></span>
           <ol className="ln-steps" id="lnSteps" aria-label="Launch progress">
             <span className="bar" id="lnBar" aria-hidden="true" />
             {steps.map((s, i) => (

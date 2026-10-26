@@ -8,7 +8,7 @@ type Key = keyof typeof legal.pages;
 
 export function legalMeta(key: Key) {
   const page = legal.pages[key];
-  return { title: `${page.title} — minted`, description: page.lead };
+  return { title: `${page.title} — NAMA`, description: page.lead };
 }
 
 export default function LegalPage({ page: key }: { page: Key }) {
