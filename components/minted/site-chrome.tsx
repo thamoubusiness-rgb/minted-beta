@@ -19,6 +19,7 @@ export function SiteHeader() {
         <nav className="links" aria-label="Main">
           <Link href="/#explore">Explore</Link>
           <Link href="/#how">How it works</Link>
+          <Link href="/dashboard">Dashboard</Link>
         </nav>
         <Link className="btn btn-ghost" href="/?launch=1">Launch your coin</Link>
       </div>

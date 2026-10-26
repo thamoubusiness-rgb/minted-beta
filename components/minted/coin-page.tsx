@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { useAlive } from "./alive";
+
+const BuyBox = dynamic(() => import("./buy-box"), { ssr: false, loading: () => <div className="bb bb-skel" aria-hidden="true" /> });
 import type { CoinView } from "@/lib/coin";
 import { geist, geistMono } from "./fonts";
 import { SiteFooter, SiteHeader } from "./site-chrome";
@@ -24,6 +28,8 @@ const Badge = ({ size = 18 }: { size?: number }) => (
 
 export default function CoinPage({ coin, cluster }: { coin: CoinView; cluster: string }) {
   const [copied, setCopied] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useAlive(rootRef);
   const explorer = (path: string) => `https://solscan.io/${path}${cluster === "mainnet-beta" ? "" : "?cluster=devnet"}`;
   const share = encodeURIComponent(`The verified coin of @${coin.handle}: $${coin.symbol}. Check the contract before buying. ${typeof window !== "undefined" ? window.location.href : ""}`);
   const holdPct = coin.creatorBalance != null ? (coin.creatorBalance / 1e9) * 100 : null; // pump.fun supply is 1B
@@ -40,13 +46,13 @@ export default function CoinPage({ coin, cluster }: { coin: CoinView; cluster: s
   }
 
   return (
-    <div className={`minted ${geist.variable} ${geistMono.variable}`}>
+    <div ref={rootRef} className={`minted ${geist.variable} ${geistMono.variable}`}>
       <div className="page">
         <div className="orb one" aria-hidden="true" />
         <div className="orb two" aria-hidden="true" style={{ top: 520 }} />
         <SiteHeader />
         <main className="wrap cp">
-          <section className="cp-hero" aria-labelledby="cpName">
+          <section className="cp-hero" aria-labelledby="cpName" data-reveal="scale">
             <div className="cp-banner" aria-hidden="true" />
             <div className="cp-id">
               <div className="cp-coin">
@@ -73,17 +79,17 @@ export default function CoinPage({ coin, cluster }: { coin: CoinView; cluster: s
 
           <div className="cp-grid">
             <section className="cp-main" aria-labelledby="cpCoin">
-              <div className="cp-ticker-row">
+              <div className="cp-ticker-row" data-reveal="">
                 <h2 id="cpCoin" className="mono">${coin.symbol}</h2>
                 <span className="state">{coin.graduated ? "Graduated to PumpSwap" : <><span className="dot" />On pump.fun bonding curve</>}</span>
               </div>
-              <div className="kpis">
-                <div className="kpi spot"><small>Market cap</small><b>{money(coin.marketCapUsd)}</b></div>
-                <div className="kpi spot"><small>Followers at launch</small><b>{compact(coin.followersAtLaunch)}</b></div>
+              <div className="kpis" data-reveal="" style={{ ["--d" as string]: ".08s" }}>
+                <div className="kpi spot"><small>Market cap</small>{coin.marketCapUsd != null ? <b data-count={coin.marketCapUsd} data-fmt="money">$0</b> : <b>—</b>}</div>
+                <div className="kpi spot"><small>Followers at launch</small><b data-count={coin.followersAtLaunch} data-fmt="compact">0</b></div>
                 <div className="kpi spot"><small>Creator&apos;s first buy</small><b>{coin.initialBuySol ? `${coin.initialBuySol} SOL` : "None"}</b></div>
               </div>
 
-              <div className="cp-card">
+              <div className="cp-card spot" data-reveal="" style={{ ["--d" as string]: ".14s" }}>
                 <h3>Creator activity</h3>
                 <p className="cp-sub">What @{coin.handle} is doing with their own coin.</p>
                 <dl className="sum">
@@ -95,7 +101,7 @@ export default function CoinPage({ coin, cluster }: { coin: CoinView; cluster: s
                 {coin.statsUpdatedAt ? <p className="ln-fine">Updated {new Date(coin.statsUpdatedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</p> : null}
               </div>
 
-              <div className="cp-card">
+              <div className="cp-card spot" data-reveal="" style={{ ["--d" as string]: ".2s" }}>
                 <h3>How this coin was verified</h3>
                 <ol className="cp-proof">
                   <li><i><Check /></i><div><b>X account signed in</b><span>@{coin.handle} signed in to NAMA with X.</span></div></li>
@@ -109,20 +115,19 @@ export default function CoinPage({ coin, cluster }: { coin: CoinView; cluster: s
             </section>
 
             <aside className="cp-side" aria-label="Buy">
-              <div className="cp-buy spot">
+              <div className="cp-buy spot" data-reveal="scale" style={{ ["--d" as string]: ".1s" }}>
                 <span className="ln-fine">Contract address</span>
                 <div className="cp-addr">
                   <code id="cpMint">{coin.mint}</code>
                   <button className="btn btn-ghost" type="button" onClick={copy}>{copied ? "Copied" : "Copy"}</button>
                 </div>
-                <a className="btn btn-solid btn-wide" href={coin.pumpUrl} target="_blank" rel="noopener">Buy on pump.fun</a>
+                <BuyBox mint={coin.mint} symbol={coin.symbol} graduated={coin.graduated} pumpUrl={coin.pumpUrl} explorer={explorer} />
                 <a className="btn btn-ghost btn-wide" href={`https://x.com/intent/post?text=${share}`} target="_blank" rel="noopener">Share on X</a>
-                <p className="ln-fine">Opens pump.fun. Check the address matches before you buy.</p>
               </div>
-              <div className="cp-note" role="note">
+              <div className="cp-note" role="note" data-reveal="" style={{ ["--d" as string]: ".18s" }}>
                 This is the only coin @{coin.handle} can launch on NAMA. A coin using this name or photo with a different address was not launched by them.
               </div>
-              <div className="cp-note" role="note">
+              <div className="cp-note" role="note" data-reveal="" style={{ ["--d" as string]: ".24s" }}>
                 Creator coins are highly speculative and can lose all their value. Read the <a href="/risk">risk notice</a>.
               </div>
             </aside>

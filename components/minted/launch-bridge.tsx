@@ -173,7 +173,9 @@ export default function LaunchBridge() {
         throw new Error("Your coin is on-chain but verification is slow. Refresh in a minute; it will appear automatically.");
       },
 
-      tokens: async () => (await api<{ tokens: Awaited<ReturnType<MintedBridge["tokens"]>> }>("/api/tokens")).tokens,
+      tokens: async (query?: string) => (await api<{ tokens: Awaited<ReturnType<MintedBridge["tokens"]>> }>(`/api/tokens${query ? `?${query}` : ""}`)).tokens,
+
+      stats: () => api("/api/stats"),
 
       search: (handle) => api<Awaited<ReturnType<MintedBridge["search"]>>>(`/api/search?handle=${encodeURIComponent(handle)}`),
     };

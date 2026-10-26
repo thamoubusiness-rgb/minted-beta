@@ -93,6 +93,7 @@ export default function MintedLanding() {
               <a href="#tokenize" data-spy="tokenize">Tokenize</a>
               <a href="#explore" data-spy="explore">Explore</a>
               <a href="#how" data-spy="how">How it works</a>
+              <a href="/dashboard">Dashboard</a>
               <a href="#stats" data-spy="stats">Your stats</a>
             </nav>
             <a className="btn btn-ghost mag" href="#launch" data-launch="" id="navLaunch">Launch your coin</a>
@@ -203,9 +204,30 @@ export default function MintedLanding() {
               <div className="sec-head">
                 <div className="t">
                   <span className="eyebrow" data-reveal="">Live directory</span>
-                  <h2 id="explore-title" className="split" aria-label="Latest launches"><Split text="Latest launches" /></h2>
+                  <h2 id="explore-title" className="split" aria-label="Leaderboard"><Split text="Leaderboard" /></h2>
                 </div>
                 <span className="live-tag" data-reveal="" style={d(".12s")}><span className="dot" />Updating live</span>
+              </div>
+              <div className="pstats" id="pstats" data-reveal="" style={d(".06s")}>
+                <div className="pstat spot"><small>Coins launched</small><b data-stat="coins" data-fmt="int">0</b></div>
+                <div className="pstat spot"><small>Combined market cap</small><b data-stat="marketCapUsd" data-fmt="money">$0</b></div>
+                <div className="pstat spot"><small>Verified creators</small><b data-stat="verifiedCreators" data-fmt="int">0</b></div>
+                <div className="pstat spot"><small>Graduated</small><b data-stat="graduated" data-fmt="int">0</b></div>
+              </div>
+              <div className="lb-bar" data-reveal="" style={d(".1s")}>
+                <div className="lb-tabs" role="tablist" aria-label="Sort coins" id="lbTabs">
+                  <span className="lb-ind" id="lbInd" aria-hidden="true" />
+                  <button type="button" role="tab" aria-selected="true" className="on" data-sort="new">Latest</button>
+                  <button type="button" role="tab" aria-selected="false" data-sort="mcap">Top market cap</button>
+                  <button type="button" role="tab" aria-selected="false" data-sort="followers">Most followers</button>
+                </div>
+                <div className="lb-chips" role="group" aria-label="Minimum followers" id="lbChips">
+                  <span className="lb-chips-k">Followers</span>
+                  <button type="button" className="on" data-min="0">All</button>
+                  <button type="button" data-min="1000">1K+</button>
+                  <button type="button" data-min="10000">10K+</button>
+                  <button type="button" data-min="100000">100K+</button>
+                </div>
               </div>
               <div className="list spot" id="list" data-reveal="scale" style={d(".1s")} />
               <div className="more">

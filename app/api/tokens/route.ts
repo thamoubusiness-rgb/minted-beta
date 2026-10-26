@@ -16,7 +16,9 @@ type Row = {
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit")) || 20));
-  const sort = url.searchParams.get("sort") === "mcap" ? "mcap" : "new";
+  const sortParam = url.searchParams.get("sort");
+  const sort = sortParam === "mcap" || sortParam === "followers" ? sortParam : "new";
+  const minFollowers = Math.max(0, Number(url.searchParams.get("min")) || 0);
   const before = url.searchParams.get("before");
   // Fresh numbers even when the scheduled job is not running (e.g. while the site is private).
   await refreshStale(4).catch(() => {});
@@ -27,7 +29,8 @@ export async function GET(req: Request) {
     from tokens t join creators c on c.id = t.creator_id
     where not t.delisted and c.status <> 'delisted'
       ${before ? sql`and t.launched_at < ${new Date(before)}` : sql``}
-    order by ${sort === "mcap" ? sql`t.market_cap_usd desc nulls last` : sql`t.launched_at desc`}
+      ${minFollowers ? sql`and t.followers_at_launch >= ${minFollowers}` : sql``}
+    order by ${sort === "mcap" ? sql`t.market_cap_usd desc nulls last, t.launched_at desc` : sort === "followers" ? sql`t.followers_at_launch desc, t.launched_at desc` : sql`t.launched_at desc`}
     limit ${limit}`;
 
   return Response.json(

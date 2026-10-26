@@ -69,12 +69,17 @@ export function initMinted(rootEl: HTMLElement): () => void {
 
   const list = $("#list");
   let shown = 4;
+  const LB = { sort: "new", min: 0 };
   const rowHTML = (c, i) =>
-    '<div class="who">' + avatar(c, "av-md") + '<div style="min-width:0"><div class="name">' + esc(c.n) + " " + check + '</div><div class="handle">@' + esc(c.h) + "</div></div></div>" +
+    '<div class="who">' + (LB.sort !== "new" ? '<span class="rank' + (i < 3 ? " top" : "") + '">' + (i + 1) + "</span>" : "") + avatar(c, "av-md") + '<div style="min-width:0"><div class="name">' + esc(c.n) + " " + check + '</div><div class="handle">@' + esc(c.h) + "</div></div></div>" +
     '<div class="stats"><div class="stat"><small>Ticker</small><span class="tick">$' + ticker(c.h) + '</span></div><div class="stat"><small>Followers</small><span class="num">' + compact(c.f || 0) + '</span></div><div class="stat"><small>Market cap</small><span class="num mc" data-i="' + i + '">' + money(c.m) + '</span></div><span class="ago num">' + ago(c.t) + "</span>" +
     '<svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></div>';
   const render = (newMint?) => {
     list.innerHTML = "";
+    if (!creators.length && (LB.min || LB.sort !== "new")) {
+      list.innerHTML = '<div class="empty"><div><b>No coins match this filter yet</b><span>Try a lower follower count.</span></div><button class="btn btn-ghost mag" type="button" data-lb-reset="">Show all</button></div>';
+      return;
+    }
     if (!creators.length) {
       list.innerHTML = '<div class="empty"><div><b>No launches yet</b><span>The first verified creator coin could be yours.</span></div><a class="btn btn-solid mag" href="#launch" data-launch="">Launch your coin</a></div>';
       return;
@@ -102,9 +107,16 @@ export function initMinted(rootEl: HTMLElement): () => void {
   };
 
   // Real data: load now, then poll; new coins slide in at the top.
-  const loadTokens = async () => {
+  const lbQuery = () => new URLSearchParams({ sort: LB.sort, min: String(LB.min), limit: "30" }).toString();
+  const isDefault = () => LB.sort === "new" && !LB.min;
+  let lbSeq = 0;
+  const loadTokens = async (swap?) => {
+    const my = ++lbSeq;
     try {
-      const rows = await B()?.tokens();
+      if (swap === true && !reduce) list.classList.add("swap");
+      const rows = await B()?.tokens(lbQuery());
+      if (my !== lbSeq) return; // a newer tab/filter click won
+      if (swap === true) { await new Promise((res) => later(res, reduce ? 0 : 160)); list.classList.remove("swap"); creators = rows.map(fromApi); render(); countRows(); return; }
       if (!rows) return;
       if (!rows.length && DEMO) return;
       const before = creators[0]?.mint;
@@ -117,9 +129,66 @@ export function initMinted(rootEl: HTMLElement): () => void {
         const c = creators[+el.getAttribute("data-i")], old = changedMcap.get(c?.mint);
         if (c && old != null && c.m != null && old !== c.m) { el.classList.add(c.m > old ? "up" : "down"); later(() => el.classList.remove("up", "down"), 700); }
       });
-      buildStrip();
-    } catch { /* keep what is shown */ }
+      if (isDefault()) buildStrip();
+    } catch { list.classList.remove("swap"); /* keep what is shown */ }
   };
+
+  /* ---------- leaderboard tabs + follower filter ---------- */
+  const lbTabs = $("#lbTabs"), lbInd = $("#lbInd"), lbChips = $("#lbChips");
+  const placeInd = () => {
+    const on = lbTabs && lbTabs.querySelector("button.on");
+    if (!on || !lbInd) return;
+    lbInd.style.width = on.offsetWidth + "px";
+    lbInd.style.transform = "translateX(" + on.offsetLeft + "px)";
+  };
+  later(placeInd, 60);
+  on(window, "resize", placeInd);
+  const setTab = (sort) => {
+    LB.sort = sort;
+    lbTabs.querySelectorAll("button").forEach((b) => { const o = b.getAttribute("data-sort") === sort; b.classList.toggle("on", o); b.setAttribute("aria-selected", String(o)); });
+    placeInd();
+  };
+  const setMin = (min) => {
+    LB.min = min;
+    lbChips.querySelectorAll("button").forEach((b) => b.classList.toggle("on", Number(b.getAttribute("data-min")) === min));
+  };
+  on(lbTabs, "click", (e) => { const b = e.target.closest("button[data-sort]"); if (!b || b.classList.contains("on")) return; setTab(b.getAttribute("data-sort")); loadTokens(true); });
+  on(lbChips, "click", (e) => { const b = e.target.closest("button[data-min]"); if (!b || b.classList.contains("on")) return; setMin(Number(b.getAttribute("data-min"))); loadTokens(true); });
+  on(list, "click", (e) => { if (e.target.closest && e.target.closest("[data-lb-reset]")) { e.preventDefault(); setTab("new"); setMin(0); loadTokens(true); } });
+
+  /* ---------- public stats strip ---------- */
+  const pstats = $("#pstats");
+  let statsSeen = false, statVals = {};
+  const statFmt = (v, f) => (f === "money" ? money(v) : Math.round(v).toLocaleString("en-US"));
+  const paintStats = (vals) => {
+    pstats.querySelectorAll("[data-stat]").forEach((el) => {
+      const k = el.getAttribute("data-stat"), f = el.getAttribute("data-fmt"), to = Number(vals[k] || 0), from = Number(statVals[k] || 0);
+      if (reduce || !statsSeen) { if (!statsSeen) return; el.textContent = statFmt(to, f); return; }
+      const t0 = performance.now();
+      const step = (t) => { if (!alive) return; let k2 = Math.min(1, (t - t0) / 1600); k2 = 1 - Math.pow(1 - k2, 3); el.textContent = statFmt(from + (to - from) * k2, f); if (k2 < 1) requestAnimationFrame(step); };
+      requestAnimationFrame(step);
+      if (from && to !== from) { el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
+    });
+  };
+  let pendingStats = null;
+  const loadStats = async () => {
+    try {
+      const v = await B()?.stats(); if (!v) return;
+      if (!statsSeen) { pendingStats = v; return; }
+      paintStats(v); statVals = v;
+    } catch { /* keep */ }
+  };
+  if (pstats) {
+    const sio = "IntersectionObserver" in window ? new IntersectionObserver((en) => {
+      if (!en.some((x) => x.isIntersecting)) return;
+      statsSeen = true; sio.disconnect();
+      if (pendingStats) { paintStats(pendingStats); statVals = pendingStats; pendingStats = null; }
+    }, { threshold: 0.3 }) : null;
+    if (sio) sio.observe(pstats); else statsSeen = true;
+    cleanups.push(() => sio && sio.disconnect());
+    whenBridge(loadStats);
+    every(() => { if (!document.hidden) loadStats(); }, 30000);
+  }
   whenBridge(loadTokens);
   // Latest launches track themselves: new coins and market caps refresh every 15s while the tab is open.
   every(() => { if (!document.hidden) loadTokens(); }, 15000);
@@ -632,7 +701,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
     view('<span class="eyebrow">Launched</span><h2 class="ln-h">You’re live, @' + esc(h) + ".</h2>" +
       '<p class="ln-sub">' + t + " is trading on pump.fun and listed on NAMA with your Verified badge.</p>" +
       '<div style="display:flex;flex-direction:column;gap:8px"><span class="ln-fine">Contract address</span><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="chip" id="mintTxt" style="user-select:all">' + esc(short) + '</span><button class="btn btn-ghost" type="button" data-act="copy" data-mint="' + esc(m) + '" style="min-height:38px">Copy</button></div></div>' +
-      '<div class="ln-actions"><a class="btn btn-solid btn-wide mag" href="https://x.com/intent/post?text=' + text + '" target="_blank" rel="noopener">' + xSvg + 'Share on X</a><a class="btn btn-ghost btn-wide" href="/c/' + encodeURIComponent(h) + '">View my coin page</a><a class="ln-link" href="' + safeUrl(token.url) + '" target="_blank" rel="noopener">Open on pump.fun</a></div>' +
+      '<div class="ln-actions"><a class="btn btn-solid btn-wide mag" href="https://x.com/intent/post?text=' + text + '" target="_blank" rel="noopener">' + xSvg + 'Share on X</a><a class="btn btn-ghost btn-wide" href="/dashboard">Open my dashboard</a><a class="btn btn-ghost btn-wide" href="/c/' + encodeURIComponent(h) + '">View my coin page</a><a class="ln-link" href="' + safeUrl(token.url) + '" target="_blank" rel="noopener">Open on pump.fun</a></div>' +
       '<p class="ln-fine">Tip: pin your post so fans find the real coin.</p>');
     burst();
     loadTokens();
@@ -649,7 +718,7 @@ export function initMinted(rootEl: HTMLElement): () => void {
     }
     view('<span class="eyebrow">One coin per account</span><h2 class="ln-h">You’ve already launched</h2>' +
       '<p class="ln-sub">@' + esc(c?.handle) + " launched $" + esc(tk?.symbol) + " on pump.fun. Each X account gets one coin, so there’s nothing more to launch here.</p>" +
-      '<div class="ln-actions"><a class="btn btn-solid btn-wide mag" href="/c/' + encodeURIComponent(c?.handle || "") + '">View my coin page</a><button class="ln-link" type="button" data-act="close">Close</button></div>');
+      '<div class="ln-actions"><a class="btn btn-solid btn-wide mag" href="/dashboard">Open my dashboard</a><a class="btn btn-ghost btn-wide" href="/c/' + encodeURIComponent(c?.handle || "") + '">View my coin page</a><button class="ln-link" type="button" data-act="close">Close</button></div>');
   }
   function burst() {
     if (reduce) return;
