@@ -497,3 +497,5 @@ html.lenis, html.lenis body{height:auto}
 .minted h1,.minted h2{font-weight:600}
 .h1 .soft{color:var(--lime)}
 .wordmark{letter-spacing:.02em}
+/* phones: keep the Verified stamp clear of the panel's close button */
+@media (max-width:760px){.ln .pv .stamp{right:auto;left:-10px}}
