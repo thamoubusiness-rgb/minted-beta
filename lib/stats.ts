@@ -2,6 +2,7 @@ import { PublicKey } from "@solana/web3.js";
 import { sql } from "./db";
 import { curveMarketCapSol, readCurve } from "./pump";
 import { connection, solUsd } from "./solana";
+import { updateVolume } from "./volume";
 
 /** Refreshes one coin's market cap, graduation and creator holdings from the chain. */
 export async function refreshTokenStats(t: { mint: string; creator_wallet: string }, usd?: number | null): Promise<boolean> {
@@ -24,6 +25,8 @@ export async function refreshTokenStats(t: { mint: string; creator_wallet: strin
       creator_balance = coalesce(${balance}, creator_balance),
       stats_updated_at = now()
     where mint = ${t.mint}`;
+  // Volume catches up a little on every refresh; failures here never block the stats.
+  await updateVolume(t.mint).catch((e) => console.error("volume update failed", t.mint, e instanceof Error ? e.message : e));
   return true;
 }
 

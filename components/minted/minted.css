@@ -506,7 +506,7 @@ html.lenis, html.lenis body{height:auto}
 .pstat:hover{transform:translateY(-3px);border-color:rgba(198,255,52,.28)}
 .pstat small{font-size:11.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
 .pstat b{font-family:var(--mono);font-size:24px;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.pstat:nth-child(2) b{color:var(--lime)}
+.pstat:nth-child(2) b,.pstat:nth-child(4) b{color:var(--lime)}
 .pstat b.bump{animation:m-bump .7s var(--spring)}
 @keyframes m-bump{0%{transform:scale(1)}40%{transform:scale(1.08);color:var(--lime)}100%{transform:scale(1)}}
 @media (max-width:760px){.pstats{grid-template-columns:repeat(2,minmax(0,1fr))}.pstat b{font-size:20px}}

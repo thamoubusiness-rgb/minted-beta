@@ -212,7 +212,7 @@ export default function MintedLanding() {
                 <div className="pstat spot"><small>Coins launched</small><b data-stat="coins" data-fmt="int">0</b></div>
                 <div className="pstat spot"><small>Combined market cap</small><b data-stat="marketCapUsd" data-fmt="money">$0</b></div>
                 <div className="pstat spot"><small>Verified creators</small><b data-stat="verifiedCreators" data-fmt="int">0</b></div>
-                <div className="pstat spot"><small>Graduated</small><b data-stat="graduated" data-fmt="int">0</b></div>
+                <div className="pstat spot"><small>Total volume</small><b data-stat="volumeUsd" data-fmt="money">$0</b></div>
               </div>
               <div className="lb-bar" data-reveal="" style={d(".1s")}>
                 <div className="lb-tabs" role="tablist" aria-label="Sort coins" id="lbTabs">

@@ -96,3 +96,8 @@ create table if not exists x_lookups (
   verified_type text,
   fetched_at    timestamptz not null default now()
 );
+
+-- Trading volume, counted by NAMA from each coin's bonding-curve transactions (SOL in + SOL out).
+alter table tokens add column if not exists volume_sol numeric not null default 0;
+alter table tokens add column if not exists volume_last_sig text;          -- newest transaction already counted
+alter table tokens add column if not exists volume_trades integer not null default 0;

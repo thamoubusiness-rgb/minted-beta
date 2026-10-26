@@ -22,7 +22,7 @@ export type MintedBridge = {
   send(txBase64: string): Promise<string>;
   waitForConfirmation(signature: string, blockhash: string, lastValidBlockHeight: number): Promise<void>;
   confirm(launchId: string, signature: string): Promise<{ mint: string; symbol: string; name: string; url: string }>;
-  stats(): Promise<{ coins: number; marketCapUsd: number; verifiedCreators: number; graduated: number }>;
+  stats(): Promise<{ coins: number; marketCapUsd: number; verifiedCreators: number; graduated: number; volumeUsd: number; volumeSol: number; trades: number }>;
   tokens(query?: string): Promise<
     {
       mint: string; name: string; handle: string; symbol: string; avatar: string | null; followersAtLaunch: number;
