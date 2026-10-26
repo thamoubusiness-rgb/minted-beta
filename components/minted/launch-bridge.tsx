@@ -112,6 +112,13 @@ export default function LaunchBridge() {
         if (!a || !a.connected) throw Object.assign(new Error("Your wallet disconnected. Reconnect it and try again."), { code: "disconnected" });
         const tx = VersionedTransaction.deserialize(Uint8Array.from(atob(txBase64), (c) => c.charCodeAt(0)));
         try {
+          // Sign in the wallet, then send through the site's own RPC so the transaction lands on the
+          // network the site runs on (wallets like Phantom otherwise send on whichever network they're set to).
+          const signer = a as Adapter & { signTransaction?: (t: VersionedTransaction) => Promise<VersionedTransaction> };
+          if (typeof signer.signTransaction === "function") {
+            const signed = await signer.signTransaction(tx);
+            return await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false, maxRetries: 3 });
+          }
           return await a.sendTransaction(tx, connection, { skipPreflight: false, maxRetries: 3 });
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);

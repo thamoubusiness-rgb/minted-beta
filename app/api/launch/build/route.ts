@@ -93,7 +93,11 @@ export async function POST(req: Request) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg === "INSUFFICIENT_FUNDS") {
-      return fail("insufficient_funds", "Your wallet doesn't have enough SOL for the fees and your first buy. Add SOL or lower the first buy.", 400);
+      const net = config.cluster === "mainnet-beta" ? "" : ` on Solana ${config.cluster} (switch your wallet to ${config.cluster}; free test SOL at faucet.solana.com)`;
+      return fail("insufficient_funds", `Your wallet doesn't have enough SOL${net} for the fees and your first buy. Add SOL or lower the first buy.`, 400);
+    }
+    if (msg === "TX_TOO_LARGE") {
+      return fail("tx_too_large", "This launch is too big for one Solana transaction. Try again with no first buy.", 400);
     }
     console.error("launch/build failed", msg);
     return fail("build_failed", "We couldn't prepare your launch. Nothing was sent. Try again in a minute.", 500);

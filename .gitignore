@@ -5,6 +5,3 @@ node_modules
 .vercel
 *.tsbuildinfo
 .netlify
-
-# Local deploy bundle (uploaded to Netlify Drop), not source
-minted-app-deploy.zip

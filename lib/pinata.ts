@@ -31,5 +31,7 @@ export async function pinJson(obj: unknown, name: string): Promise<string> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ pinataContent: obj, pinataMetadata: { name } }),
   });
-  return ipfsUrl(IpfsHash);
+  // The metadata link is written into the launch transaction, which has a hard size cap,
+  // so it uses the shortest public gateway (the same one pump.fun uses).
+  return `https://ipfs.io/ipfs/${IpfsHash}`;
 }

@@ -69,24 +69,38 @@ export async function buildCreateTx(opts: {
   }
 
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-  const message = new TransactionMessage({
-    payerKey: creator,
-    recentBlockhash: blockhash,
-    instructions: [
-      ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
-      ComputeBudgetProgram.setComputeUnitPrice({ microLamports: config.priorityFee }),
-      ...ixs,
-    ],
-  }).compileToV0Message();
 
-  const tx = new VersionedTransaction(message);
-  tx.sign([mint]);
+  // Solana caps a transaction at 1232 bytes. Create + first buy is close to that limit, so compute-budget
+  // instructions are added only while the transaction still fits (most complete variant first).
+  const MAX_TX_BYTES = 1232;
+  const variants: TransactionInstruction[][] = [
+    [ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }), ComputeBudgetProgram.setComputeUnitPrice({ microLamports: config.priorityFee }), ...ixs],
+    [ComputeBudgetProgram.setComputeUnitPrice({ microLamports: config.priorityFee }), ...ixs],
+    ixs,
+  ];
+  let tx: VersionedTransaction | null = null;
+  for (const instructions of variants) {
+    try {
+      const candidate = new VersionedTransaction(
+        new TransactionMessage({ payerKey: creator, recentBlockhash: blockhash, instructions }).compileToV0Message()
+      );
+      candidate.sign([mint]);
+      if (candidate.serialize().length <= MAX_TX_BYTES) {
+        tx = candidate;
+        break;
+      }
+    } catch {
+      // Too large to serialize: try the next, smaller variant.
+    }
+  }
+  if (!tx) throw new Error("TX_TOO_LARGE");
 
   // Fail early with a readable error (e.g. not enough SOL) before the wallet pops up.
   const sim = await connection.simulateTransaction(tx, { sigVerify: false, replaceRecentBlockhash: true });
   if (sim.value.err) {
     const logs = (sim.value.logs || []).join("\n");
-    const lowFunds = /insufficient|0x1\b|Attempt to debit/i.test(logs + JSON.stringify(sim.value.err));
+    // AccountNotFound = the fee payer wallet has never held SOL on this network.
+    const lowFunds = /insufficient|0x1\b|Attempt to debit|AccountNotFound/i.test(logs + JSON.stringify(sim.value.err));
     throw new Error(lowFunds ? "INSUFFICIENT_FUNDS" : `SIMULATION_FAILED: ${JSON.stringify(sim.value.err)}`);
   }
 
