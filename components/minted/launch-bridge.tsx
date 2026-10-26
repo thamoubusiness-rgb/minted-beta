@@ -128,8 +128,18 @@ export default function LaunchBridge() {
       },
 
       waitForConfirmation: async (signature, blockhash, lastValidBlockHeight) => {
-        const r = await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
-        if (r.value.err) throw Object.assign(new Error("The transaction failed on Solana. No coin was created."), { code: "tx_failed" });
+        // Poll instead of websockets (the relay is HTTP only). Stops when confirmed, failed or expired.
+        void blockhash;
+        for (let i = 0; i < 90; i++) {
+          const st = (await connection.getSignatureStatuses([signature])).value[0];
+          if (st?.err) throw Object.assign(new Error("The transaction failed on Solana. No coin was created."), { code: "tx_failed" });
+          if (st && (st.confirmationStatus === "confirmed" || st.confirmationStatus === "finalized")) return;
+          if (i % 5 === 4 && (await connection.getBlockHeight("confirmed")) > lastValidBlockHeight) {
+            throw Object.assign(new Error("The transaction expired before Solana picked it up. Nothing was charged. Try again."), { code: "expired" });
+          }
+          await new Promise((r) => setTimeout(r, 1500));
+        }
+        throw new Error("Solana is slow to confirm. Your coin will appear automatically if it went through.");
       },
 
       confirm: async (launchId, signature) => {
