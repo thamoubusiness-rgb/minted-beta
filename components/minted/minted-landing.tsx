@@ -105,7 +105,6 @@ export default function MintedLanding() {
           <section className="hero wrap" aria-labelledby="hero-title">
             <div className="hero-halo" aria-hidden="true" />
             <div className="hero-inner" id="heroInner">
-              <span className="pill" data-reveal="" style={d(".05s")}><span className="dot" />Verified creator coins on Solana</span>
               <h1 className="h1" id="hero-title">
                 <span className="line">
                   <span className="w" style={{ transitionDelay: ".10s" }}>Turn</span>{" "}
