@@ -102,5 +102,23 @@ alter table tokens add column if not exists volume_sol numeric not null default 
 alter table tokens add column if not exists volume_last_sig text;          -- newest transaction already counted
 alter table tokens add column if not exists volume_trades integer not null default 0;
 
--- Beta test launch: hidden from every public view (leaderboard, ticker, stats, search, coin page). Reversible: set delisted = false.
-update tokens set delisted = true where upper(symbol) = 'R1CCHY' and not delisted;
+-- Archive for coins removed from NAMA (e.g. beta tests). Same columns as tokens, without the one-per-account limits.
+create table if not exists tokens_archive (like tokens);
+alter table tokens_archive add column if not exists archived_at timestamptz not null default now();
+
+-- Beta test launch ($R1CCHY, launched before the public opening): move it to the archive so the
+-- account and wallet can launch again. Date-bounded so a future real launch is never touched.
+do $$
+begin
+  if exists (select 1 from tokens where upper(symbol) = 'R1CCHY' and launched_at < '2026-10-27 17:00:00+00') then
+    execute $q$
+      insert into tokens_archive
+        select t.*, now() from tokens t
+        where upper(t.symbol) = 'R1CCHY' and t.launched_at < '2026-10-27 17:00:00+00'
+          and not exists (select 1 from tokens_archive a where a.mint = t.mint)
+    $q$;
+    delete from tokens t
+      where upper(t.symbol) = 'R1CCHY' and t.launched_at < '2026-10-27 17:00:00+00'
+        and exists (select 1 from tokens_archive a where a.mint = t.mint);
+  end if;
+end $$;
