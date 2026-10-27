@@ -14,7 +14,10 @@ export async function GET() {
            count(*) filter (where reward_mode = 'holders')::int as holders_rewards
     from tokens t join creators c on c.id = t.creator_id
     where not t.delisted and c.status <> 'delisted'`;
-  const [v] = await sql<{ n: number }[]>`select count(*)::int as n from wallet_links`;
+  // Creators who proved a wallet, minus anyone whose coin was delisted (e.g. test launches).
+  const [v] = await sql<{ n: number }[]>`
+    select count(*)::int as n from wallet_links w join creators c on c.id = w.creator_id
+    where c.status <> 'delisted' and not exists (select 1 from tokens t where t.creator_id = w.creator_id and t.delisted)`;
   const usd = await solUsd();
   const volumeSol = t.vol ? Number(t.vol) : 0;
   return Response.json(
