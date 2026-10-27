@@ -101,3 +101,6 @@ create table if not exists x_lookups (
 alter table tokens add column if not exists volume_sol numeric not null default 0;
 alter table tokens add column if not exists volume_last_sig text;          -- newest transaction already counted
 alter table tokens add column if not exists volume_trades integer not null default 0;
+
+-- Beta test launch: hidden from every public view (leaderboard, ticker, stats, search, coin page). Reversible: set delisted = false.
+update tokens set delisted = true where upper(symbol) = 'R1CCHY' and not delisted;
